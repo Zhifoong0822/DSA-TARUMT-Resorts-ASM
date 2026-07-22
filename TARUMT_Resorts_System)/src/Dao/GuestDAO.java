@@ -1,6 +1,5 @@
 // Author: [Your Name]
-package dao;
-
+package Dao;
 import adt.CustomHashMap;
 import adt.MapInterface;
 import entity.GuestProfile;
@@ -23,3 +22,4 @@ public class GuestDAO {
         return map;
     }
 }
+

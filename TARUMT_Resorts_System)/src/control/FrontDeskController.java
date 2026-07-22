@@ -2,7 +2,7 @@
 package control;
 
 import adt.MapInterface;
-import dao.GuestDAO;
+import Dao.GuestDAO;
 import entity.GuestProfile;
 
 public class FrontDeskController {
