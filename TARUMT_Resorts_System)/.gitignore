@@ -1,0 +1,31 @@
+# ==========================================
+# NetBeans Specific Ignores
+# ==========================================
+# Crucial: Ignore local machine user settings
+nbproject/private/
+nbproject/private/*
+nbproject/private/private.xml
+nbproject/private/private.properties
+
+# ==========================================
+# NetBeans Build & Artifact Folders
+# ==========================================
+build/
+dist/
+nbproject/build-impl.xml
+
+# ==========================================
+# Java Compiled Classes & Archives
+# ==========================================
+*.class
+*.jar
+*.war
+*.ear
+
+# ==========================================
+# Operating System Files
+# ==========================================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
