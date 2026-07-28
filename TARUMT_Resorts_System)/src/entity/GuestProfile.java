@@ -17,6 +17,14 @@ public class GuestProfile {
     // Getters and Setters
     public String getConfirmationNumber() { return confirmationNumber; }
     public String getGuestName() { return guestName; }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public double getCurrentBilling() {
+        return currentBilling;
+    }
     
     @Override
     public String toString() {

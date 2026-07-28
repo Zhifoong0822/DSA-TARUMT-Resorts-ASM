@@ -91,4 +91,21 @@ public class CustomHashMap<K, V> implements MapInterface<K, V> {
         table = new Node[capacity];
         size = 0;
     }
+    
+    @Override
+    @SuppressWarnings("unchecked")
+    public V[] values(V[] array) {
+        if (array.length < size) {
+            array = (V[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), size);
+        }
+        int index = 0;
+        for (int i = 0; i < capacity; i++) {
+            Node<K, V> current = table[i];
+            while (current != null) {
+                array[index++] = current.value;
+                current = current.next;
+            }
+        }
+    return array;
+}
 }

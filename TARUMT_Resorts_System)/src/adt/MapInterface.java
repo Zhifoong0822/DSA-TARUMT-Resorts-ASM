@@ -8,4 +8,5 @@ public interface MapInterface<K, V> {
     int size();
     boolean isEmpty();
     void clear();
+    V[] values(V[] array);
 }
