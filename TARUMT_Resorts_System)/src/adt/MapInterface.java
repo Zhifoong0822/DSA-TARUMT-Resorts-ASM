@@ -1,4 +1,4 @@
-
+// Author: [Chew Zhi Foong]
 package adt;
 
 public interface MapInterface<K, V> {

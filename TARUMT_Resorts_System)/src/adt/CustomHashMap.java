@@ -1,9 +1,9 @@
+// Author: [Chew Zhi Foong]
 
 package adt;
 
 public class CustomHashMap<K, V> implements MapInterface<K, V> {
     
-    // Internal node structure for Chaining
     private static class Node<K, V> {
         K key;
         V value;
@@ -19,7 +19,7 @@ public class CustomHashMap<K, V> implements MapInterface<K, V> {
     private Node<K, V>[] table;
     private int capacity;
     private int size;
-    private static final int DEFAULT_CAPACITY = 101; // Using a prime number reduces collisions
+    private static final int DEFAULT_CAPACITY = 101; 
 
     @SuppressWarnings("unchecked")
     public CustomHashMap() {
@@ -48,7 +48,7 @@ public class CustomHashMap<K, V> implements MapInterface<K, V> {
             current = current.next;
         }
 
-        // Insert new node at the beginning of the chain (O(1) insertion)
+        // Insert new node at the beginning
         Node<K, V> newNode = new Node<>(key, value);
         newNode.next = table[index];
         table[index] = newNode;
@@ -60,14 +60,13 @@ public class CustomHashMap<K, V> implements MapInterface<K, V> {
         int index = getHashIndex(key);
         Node<K, V> current = table[index];
 
-        // Traverse the chain at the specific index
         while (current != null) {
             if (current.key.equals(key)) {
                 return current.value;
             }
             current = current.next;
         }
-        return null; // Key not found
+        return null; 
     }
 
     @Override
