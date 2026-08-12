@@ -1,14 +1,18 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt 
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java 
  */
 import boundary.FrontDeskUI;
 import boundary.HousekeepingUI;
+import boundary.VipRoomAllocationUI;
 import control.HousekeepingController;
 import Dao.RoomDAO;
 import adt.MapInterface;
 import entity.Room;
 import java.util.Scanner;
+import walkinregistrationbooking.MemberDao;
+import walkinregistrationbooking.RegisterBookingUI;
+import walkinregistrationbooking.RegisterInterfaceController;
 /**
  *
  * @author Gigabyte
@@ -21,6 +25,11 @@ public class TARUMTResortsSystem {
         HousekeepingController housekeepingController = new HousekeepingController(roomMap);
         FrontDeskUI frontDeskUI = new FrontDeskUI(housekeepingController, roomMap, scanner);
         HousekeepingUI housekeepingUI = new HousekeepingUI(housekeepingController, scanner);
+        VipRoomAllocationUI vipRoomAllocationUI = new VipRoomAllocationUI(roomMap, scanner);
+        walkinregistrationbooking.RoomDao bookingRoomDAO = new walkinregistrationbooking.RoomDao();
+        RegisterInterfaceController registerController =
+                new RegisterInterfaceController(new MemberDao(), bookingRoomDAO);
+        RegisterBookingUI registerBookingUI = new RegisterBookingUI(registerController, bookingRoomDAO);
         int choice = -1;
 
         do {
@@ -43,11 +52,11 @@ public class TARUMTResortsSystem {
                     break;
 
                 case 3:
-                    System.out.println("\nVIP & Loyalty Tier Priority Room Allocation is not available yet.");
+                    vipRoomAllocationUI.startMenu();
                     break;
 
                 case 4:
-                    System.out.println("\nWalk-In Registration & Standard Booking is not available yet.");
+                    registerBookingUI.start();
                     break;
 
                 case 0:
