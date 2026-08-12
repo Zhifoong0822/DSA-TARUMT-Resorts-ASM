@@ -24,11 +24,18 @@ public class HousekeepingUI {
 
     public HousekeepingUI() {
 
-        controller
-                = new HousekeepingController();
+        this(new HousekeepingController(), new Scanner(System.in));
+    }
 
-        scanner
-                = new Scanner(System.in);
+    public HousekeepingUI(HousekeepingController controller) {
+        this(controller, new Scanner(System.in));
+    }
+
+    public HousekeepingUI(HousekeepingController controller, Scanner scanner) {
+
+        this.controller = controller;
+
+        this.scanner = scanner;
     }
 
     public void run() {
@@ -80,14 +87,18 @@ public class HousekeepingUI {
                     break;
 
                 case 5:
-                    viewLatestUpdate();
+                    handleCompletedLateCheckOut();
                     break;
 
                 case 6:
-                    generateRoomStatusReport();
+                    viewLatestUpdate();
                     break;
 
                 case 7:
+                    generateRoomStatusReport();
+                    break;
+
+                case 8:
                     generateStaffPerformanceReport();
                     break;
 
@@ -143,15 +154,19 @@ public class HousekeepingUI {
         );
 
         System.out.println(
-                "5. View Latest Status Update"
+                "5. Handle Completed Late Check-Out"
         );
 
         System.out.println(
-                "6. Generate Room Status Report"
+                "6. View Latest Status Update"
         );
 
         System.out.println(
-                "7. Generate Staff Performance Report"
+                "7. Generate Room Status Report"
+        );
+
+        System.out.println(
+                "8. Generate Staff Performance Report"
         );
 
         System.out.println(
@@ -160,6 +175,22 @@ public class HousekeepingUI {
 
         System.out.println(
                 "=================================================="
+        );
+    }
+
+    private void handleCompletedLateCheckOut() {
+
+        System.out.print("Enter room number: ");
+
+        String roomNumber = scanner.nextLine().trim();
+
+        if (roomNumber.isEmpty()) {
+            System.out.println("Room number cannot be blank.");
+            return;
+        }
+
+        System.out.println(
+                controller.handleCompletedLateCheckOut(roomNumber)
         );
     }
 

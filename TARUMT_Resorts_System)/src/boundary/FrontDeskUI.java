@@ -2,6 +2,7 @@
 package boundary;
 
 import control.FrontDeskController;
+import control.HousekeepingController;
 import entity.GuestProfile;
 import entity.Room;
 import java.util.Scanner;
@@ -9,7 +10,21 @@ import java.util.Scanner;
 public class FrontDeskUI {
 
     private FrontDeskController controller = new FrontDeskController();
-    private Scanner scanner = new Scanner(System.in);
+    private HousekeepingController housekeepingController;
+    private Scanner scanner;
+
+    public FrontDeskUI() {
+        this(new HousekeepingController(), new Scanner(System.in));
+    }
+
+    public FrontDeskUI(HousekeepingController housekeepingController) {
+        this(housekeepingController, new Scanner(System.in));
+    }
+
+    public FrontDeskUI(HousekeepingController housekeepingController, Scanner scanner) {
+        this.housekeepingController = housekeepingController;
+        this.scanner = scanner;
+    }
 
     public void startMenu() {
         int choice = -1;
@@ -21,6 +36,7 @@ public class FrontDeskUI {
             System.out.println("2. Search Available Rooms by Room Type");
             System.out.println("3. Generate Report: High Outstanding Bills");
             System.out.println("4. Generate Report: Occupancy Roster by Room Type");
+            System.out.println("5. Handle Late Check-Out Request");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
 
@@ -43,13 +59,29 @@ public class FrontDeskUI {
                 case 4:
                     handleRoomRosterReport();
                     break;
+                case 5:
+                    HandleLateCheckOut();
+                    break;
                 case 0:
                     System.out.println("\nExiting Front Desk System. Goodbye!");
                     break;
                 default:
-                    System.out.println("\n[Error] Invalid choice! Please enter a number from 0 to 4.");
+                    System.out.println("\n[Error] Invalid choice! Please enter a number from 0 to 5.");
             }
         } while (choice != 0);
+    }
+
+    private void HandleLateCheckOut() {
+        System.out.println("\n--- LATE CHECK-OUT REQUEST ---");
+        System.out.print("Enter room number requesting late check-out: ");
+        String roomNumber = scanner.nextLine().trim();
+
+        if (roomNumber.isEmpty()) {
+            System.out.println("[Error] Room number cannot be blank.");
+            return;
+        }
+
+        System.out.println(housekeepingController.HandleLateCheckOut(roomNumber));
     }
 
     private void handleGuestSearch() {

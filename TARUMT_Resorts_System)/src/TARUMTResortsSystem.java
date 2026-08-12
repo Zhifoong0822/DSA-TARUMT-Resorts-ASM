@@ -4,6 +4,7 @@
  */
 import boundary.FrontDeskUI;
 import boundary.HousekeepingUI;
+import control.HousekeepingController;
 import java.util.Scanner;
 /**
  *
@@ -13,6 +14,9 @@ public class TARUMTResortsSystem {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        HousekeepingController housekeepingController = new HousekeepingController();
+        FrontDeskUI frontDeskUI = new FrontDeskUI(housekeepingController, scanner);
+        HousekeepingUI housekeepingUI = new HousekeepingUI(housekeepingController, scanner);
         int choice = -1;
 
         do {
@@ -27,11 +31,11 @@ public class TARUMTResortsSystem {
 
             switch (choice) {
                 case 1:
-                    new FrontDeskUI().startMenu();
+                    frontDeskUI.startMenu();
                     break;
 
                 case 2:
-                    new HousekeepingUI().run();
+                    housekeepingUI.run();
                     break;
 
                 case 3:

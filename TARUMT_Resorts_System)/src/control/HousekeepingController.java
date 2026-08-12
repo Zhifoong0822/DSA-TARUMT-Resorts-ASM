@@ -109,6 +109,68 @@ public class HousekeepingController {
     }
 
     // =====================================================
+    // LATE CHECK-OUT
+    // =====================================================
+
+    public String HandleLateCheckOut(String roomNumber) {
+
+        HousekeepingTask task = searchTaskByRoom(roomNumber);
+
+        if (task == null) {
+            return "Room " + roomNumber + " was not found in the housekeeping task list.";
+        }
+
+        HousekeepingStatus currentStatus = task.getStatus();
+
+        if (currentStatus == HousekeepingStatus.DIRTY) {
+            return "Current status: Dirty\n"
+                    + "Late check-out request recorded for room " + task.getRoomNumber() + ".";
+        }
+
+        StatusChange change = new StatusChange(
+                searchTaskIndexById(task.getTaskId()),
+                task.getTaskId(),
+                currentStatus,
+                HousekeepingStatus.DIRTY
+        );
+
+        statusHistory.push(change);
+        task.setStatus(HousekeepingStatus.DIRTY);
+
+        return "Late check-out request recorded.\n"
+                + "Room " + task.getRoomNumber() + " status changed to Dirty.";
+    }
+
+    public String handleCompletedLateCheckOut(String roomNumber) {
+
+        HousekeepingTask task = searchTaskByRoom(roomNumber);
+
+        if (task == null) {
+            return "Room " + roomNumber + " was not found in the housekeeping task list.";
+        }
+
+        if (task.getStatus() != HousekeepingStatus.DIRTY) {
+            return "Current status: " + task.getStatus() + "\n"
+                    + "Room " + task.getRoomNumber()
+                    + " cannot begin cleaning because its status is not Dirty.";
+        }
+
+        String result = updateTaskStatus(
+                task.getTaskId(),
+                HousekeepingStatus.CLEANING_IN_PROGRESS
+        );
+
+        if (result.startsWith("Status successfully updated")) {
+            return "Current status: Dirty\n"
+                    + "Late check-out completed.\n"
+                    + "Room " + task.getRoomNumber()
+                    + " status changed back to Cleaning in Progress.";
+        }
+
+        return result;
+    }
+
+    // =====================================================
     // UPDATE STATUS
     // =====================================================
 
