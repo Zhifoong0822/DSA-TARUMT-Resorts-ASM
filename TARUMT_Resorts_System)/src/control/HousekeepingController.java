@@ -6,10 +6,13 @@ package control;
 
 import adt.LinkedStack;
 import adt.StackInterface;
+import adt.MapInterface;
+import Dao.RoomDAO;
 
 import entity.HousekeepingStatus;
 import entity.HousekeepingTask;
 import entity.StatusChange;
+import entity.Room;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -28,7 +31,14 @@ public class HousekeepingController {
 
     private StackInterface<StatusChange> statusHistory;
 
+    private MapInterface<String, Room> roomMap;
+
     public HousekeepingController() {
+
+        this(new RoomDAO().loadRooms());
+    }
+
+    public HousekeepingController(MapInterface<String, Room> roomMap) {
 
         tasks = new HousekeepingTask[MAX_TASKS];
 
@@ -36,7 +46,9 @@ public class HousekeepingController {
 
         statusHistory = new LinkedStack<>();
 
-        loadSampleData();
+        this.roomMap = roomMap;
+
+        loadTasksFromRoomDAO();
     }
 
     // =====================================================
@@ -136,6 +148,7 @@ public class HousekeepingController {
 
         statusHistory.push(change);
         task.setStatus(HousekeepingStatus.DIRTY);
+        updateRoomStatus(task);
 
         return "Late check-out request recorded.\n"
                 + "Room " + task.getRoomNumber() + " status changed to Dirty.";
@@ -214,6 +227,7 @@ public class HousekeepingController {
         statusHistory.push(change);
 
         task.setStatus(newStatus);
+        updateRoomStatus(task);
 
         // If completed
         if (newStatus
@@ -297,6 +311,7 @@ public class HousekeepingController {
         task.setStatus(
                 latestChange.getPreviousStatus()
         );
+        updateRoomStatus(task);
 
         /*
          * If READY status is rolled back,
@@ -752,60 +767,50 @@ public class HousekeepingController {
     }
 
     // =====================================================
-    // SAMPLE DATA
+    // BUILD HOUSEKEEPING TASKS FROM ROOM DAO DATA
     // =====================================================
 
-    private void loadSampleData() {
+    private void loadTasksFromRoomDAO() {
 
-        LocalDate today
-                = LocalDate.now();
+        Room[] rooms = roomMap.values(new Room[roomMap.size()]);
+        int sequence = 1;
 
-        addTask(
-                new HousekeepingTask(
-                        "T001",
-                        "101",
-                        1,
-                        "HK001",
-                        HousekeepingStatus.DIRTY,
-                        today,
-                        LocalTime.of(9, 0)
-                )
-        );
+        for (Room room : rooms) {
+            if (room == null) {
+                continue;
+            }
 
-        addTask(
-                new HousekeepingTask(
-                        "T002",
-                        "205",
-                        2,
-                        "HK002",
-                        HousekeepingStatus.CLEANING_IN_PROGRESS,
-                        today,
-                        LocalTime.of(9, 15)
-                )
-        );
+            addTask(new HousekeepingTask(
+                    String.format("T%03d", sequence),
+                    room.getRoomNumber(),
+                    extractFloor(room.getRoomNumber()),
+                    String.format("HK%03d", ((sequence - 1) % 3) + 1),
+                    parseRoomStatus(room.getStatus()),
+                    LocalDate.now(),
+                    LocalTime.of(9, 0).plusMinutes((sequence - 1) * 10)
+            ));
+            sequence++;
+        }
+    }
 
-        addTask(
-                new HousekeepingTask(
-                        "T003",
-                        "303",
-                        3,
-                        "HK001",
-                        HousekeepingStatus.INSPECTED,
-                        today,
-                        LocalTime.of(10, 0)
-                )
-        );
+    private HousekeepingStatus parseRoomStatus(String status) {
+        for (HousekeepingStatus value : HousekeepingStatus.values()) {
+            if (value.toString().equalsIgnoreCase(status)) {
+                return value;
+            }
+        }
+        return HousekeepingStatus.DIRTY;
+    }
 
-        addTask(
-                new HousekeepingTask(
-                        "T004",
-                        "307",
-                        3,
-                        "HK003",
-                        HousekeepingStatus.DIRTY,
-                        today,
-                        LocalTime.of(10, 30)
-                )
-        );
+    private int extractFloor(String roomNumber) {
+        String digits = roomNumber.replaceAll("\\D", "");
+        return digits.isEmpty() ? 0 : Character.getNumericValue(digits.charAt(0));
+    }
+
+    private void updateRoomStatus(HousekeepingTask task) {
+        Room room = roomMap.get(task.getRoomNumber());
+        if (room != null) {
+            room.setStatus(task.getStatus().toString());
+        }
     }
 }

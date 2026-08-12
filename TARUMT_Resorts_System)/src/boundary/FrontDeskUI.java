@@ -5,16 +5,19 @@ import control.FrontDeskController;
 import control.HousekeepingController;
 import entity.GuestProfile;
 import entity.Room;
+import adt.MapInterface;
 import java.util.Scanner;
 
 public class FrontDeskUI {
 
-    private FrontDeskController controller = new FrontDeskController();
+    private FrontDeskController controller;
     private HousekeepingController housekeepingController;
     private Scanner scanner;
 
     public FrontDeskUI() {
-        this(new HousekeepingController(), new Scanner(System.in));
+        this.controller = new FrontDeskController();
+        this.housekeepingController = new HousekeepingController();
+        this.scanner = new Scanner(System.in);
     }
 
     public FrontDeskUI(HousekeepingController housekeepingController) {
@@ -22,6 +25,14 @@ public class FrontDeskUI {
     }
 
     public FrontDeskUI(HousekeepingController housekeepingController, Scanner scanner) {
+        this.controller = new FrontDeskController();
+        this.housekeepingController = housekeepingController;
+        this.scanner = scanner;
+    }
+
+    public FrontDeskUI(HousekeepingController housekeepingController,
+            MapInterface<String, Room> roomMap, Scanner scanner) {
+        this.controller = new FrontDeskController(roomMap);
         this.housekeepingController = housekeepingController;
         this.scanner = scanner;
     }

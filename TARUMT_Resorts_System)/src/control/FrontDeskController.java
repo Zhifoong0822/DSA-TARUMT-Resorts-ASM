@@ -23,6 +23,12 @@ public class FrontDeskController {
         this.roomMap = roomDAO.loadRooms();
     }
 
+    public FrontDeskController(MapInterface<String, Room> roomMap) {
+        this.guestDAO = new GuestDAO();
+        this.guestMap = guestDAO.loadGuests();
+        this.roomMap = roomMap;
+    }
+
     public GuestProfile findGuestByConfirmation(String confirmationNum) {
         return guestMap.get(confirmationNum);
     }

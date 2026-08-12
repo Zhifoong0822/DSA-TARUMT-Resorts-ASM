@@ -5,6 +5,9 @@
 import boundary.FrontDeskUI;
 import boundary.HousekeepingUI;
 import control.HousekeepingController;
+import Dao.RoomDAO;
+import adt.MapInterface;
+import entity.Room;
 import java.util.Scanner;
 /**
  *
@@ -14,8 +17,9 @@ public class TARUMTResortsSystem {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        HousekeepingController housekeepingController = new HousekeepingController();
-        FrontDeskUI frontDeskUI = new FrontDeskUI(housekeepingController, scanner);
+        MapInterface<String, Room> roomMap = new RoomDAO().loadRooms();
+        HousekeepingController housekeepingController = new HousekeepingController(roomMap);
+        FrontDeskUI frontDeskUI = new FrontDeskUI(housekeepingController, roomMap, scanner);
         HousekeepingUI housekeepingUI = new HousekeepingUI(housekeepingController, scanner);
         int choice = -1;
 

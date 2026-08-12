@@ -10,6 +10,7 @@ package entity;
  */
 public enum HousekeepingStatus {
 
+    OCCUPIED("Occupied"),
     DIRTY("Dirty"),
     CLEANING_IN_PROGRESS("Cleaning In Progress"),
     INSPECTED("Inspected"),
