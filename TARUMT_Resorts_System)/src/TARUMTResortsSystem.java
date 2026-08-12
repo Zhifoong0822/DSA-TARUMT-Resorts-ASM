@@ -10,9 +10,9 @@ import Dao.RoomDAO;
 import adt.MapInterface;
 import entity.Room;
 import java.util.Scanner;
-import walkinregistrationbooking.MemberDao;
-import walkinregistrationbooking.RegisterBookingUI;
-import walkinregistrationbooking.RegisterInterfaceController;
+import Dao.MemberDao;
+import boundary.RegisterBookingUI;
+import control.RegisterInterfaceController;
 /**
  *
  * @author Gigabyte

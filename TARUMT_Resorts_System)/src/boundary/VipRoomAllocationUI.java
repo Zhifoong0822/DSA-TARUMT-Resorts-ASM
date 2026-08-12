@@ -6,8 +6,8 @@ import adt.MapInterface;
 import entity.LoyaltyRoomRequest;
 import entity.Room;
 import java.util.Scanner;
-import walkinregistrationbooking.Member;
-import walkinregistrationbooking.MemberDao;
+import entity.Member;
+import Dao.MemberDao;
 
 public class VipRoomAllocationUI {
 

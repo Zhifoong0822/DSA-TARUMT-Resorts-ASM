@@ -1,6 +1,13 @@
-package walkinregistrationbooking;
+package boundary;
 
+import control.RegisterInterfaceController;
+import Dao.MemberDao;
+import entity.Member;
+import entity.Booking;
 import java.util.Scanner;
+import walkinregistrationbooking.BookingReport;
+import walkinregistrationbooking.Room;
+import walkinregistrationbooking.RoomDao;
 
 public class RegisterBookingUI {
 

@@ -31,4 +31,14 @@ public class Room {
     public boolean isAvailable() {
         return "Ready for Check-In".equalsIgnoreCase(status);
     }
+    
+        @Override
+    public String toString() {
+
+        return roomNumber
+                + " | "
+                + roomType
+                + " | "
+                + status;
+    }
 }
