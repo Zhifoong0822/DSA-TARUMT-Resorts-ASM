@@ -254,6 +254,11 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     );
 
     System.out.println(
+            "Confirmation No. : "
+                    + booking.getConfirmationNumber()
+    );
+
+    System.out.println(
             "Guest          : "
                     + booking.getGuestDisplayName()
     );
@@ -382,6 +387,11 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     System.out.println(
             "Waiting Number : "
                     + booking.getWaitingNumber()
+    );
+
+    System.out.println(
+            "Confirmation No. : "
+                    + booking.getConfirmationNumber()
     );
 
     System.out.println(

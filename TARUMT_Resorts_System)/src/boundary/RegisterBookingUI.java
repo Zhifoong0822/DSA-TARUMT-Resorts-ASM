@@ -40,7 +40,6 @@ public class RegisterBookingUI {
     // =====================================================
 
     public void start() {
-
         loggedIn = true;
 
         while (loggedIn) {

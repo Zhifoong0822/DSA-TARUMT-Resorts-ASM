@@ -39,6 +39,14 @@ public class FrontDeskUI {
         this.scanner = scanner;
     }
 
+    public FrontDeskUI(HousekeepingController housekeepingController,
+            MapInterface<String, Room> roomMap, Scanner scanner,
+            RegisterInterfaceController bookingController) {
+        this.controller = new FrontDeskController(roomMap, bookingController);
+        this.housekeepingController = housekeepingController;
+        this.scanner = scanner;
+    }
+
     public void startMenu() {
         int choice = -1;
         do {
@@ -101,14 +109,6 @@ public class FrontDeskUI {
         System.out.println(housekeepingController.HandleLateCheckOut(roomNumber));
     }
 
-    public FrontDeskUI(HousekeepingController housekeepingController,
-            MapInterface<String, Room> roomMap, Scanner scanner,
-            RegisterInterfaceController bookingController) {
-        this.controller = new FrontDeskController(roomMap, bookingController);
-        this.housekeepingController = housekeepingController;
-        this.scanner = scanner;
-    }
-
     private void handleNormalCheckOut() {
         System.out.println("\n--- NORMAL CHECK-OUT ---");
         System.out.print("Enter room number for check-out: ");
@@ -125,27 +125,28 @@ public class FrontDeskUI {
     private void handleGuestSearch() {
         System.out.println("\n--- GUEST INSTANT SEARCH ---");
         System.out.print("Enter 8-digit confirmation number: ");
-        String confNum = scanner.nextLine().trim();
+        String confirmationNumber = scanner.nextLine().trim();
 
-        if (!confNum.matches("\\d{8}")) {
+        if (!confirmationNumber.matches("\\d{8}")) {
             System.out.println("[Error] Confirmation number must contain exactly 8 digits.");
             return;
         }
 
-        Booking booking = controller.findWalkInBookingByConfirmation(confNum);
+        Booking booking = controller.findWalkInBookingByConfirmation(confirmationNumber);
         if (booking != null) {
             System.out.println("\n[BOOKING MATCH FOUND]");
             printBookingDetails(booking);
             return;
         }
 
-        GuestProfile guest = controller.findGuestByConfirmation(confNum);
+        GuestProfile guest = controller.findGuestByConfirmation(confirmationNumber);
 
         if (guest != null) {
             System.out.println("\n[MATCH FOUND]");
             printGuestDetails(guest);
         } else {
-            System.out.println("\n[NOT FOUND] No record associated with ID: " + confNum);
+            System.out.println("\n[NOT FOUND] No record associated with confirmation number: "
+                    + confirmationNumber);
         }
     }
 
