@@ -154,7 +154,7 @@ public class HousekeepingUI {
         );
 
         System.out.println(
-                "5. Handle Completed Late Check-Out"
+                "5. Check Late Check-Out Status"
         );
 
         System.out.println(
@@ -272,104 +272,71 @@ public class HousekeepingUI {
     // =====================================================
 
     private void updateStatus() {
+        System.out.println("\n--- UPDATE CLEANING STATUS ---");
+        System.out.println("1. Assign Cleaning Task");
+        System.out.println("2. Confirm Cleaning Completion");
+        System.out.println("3. Inspection Done");
+        System.out.print("Enter choice: ");
 
-        System.out.print(
-                "Enter Task ID: "
-        );
-
-        String taskId
-                = scanner.nextLine();
-
-        HousekeepingTask task
-                = controller.searchTaskById(taskId);
-
-        if (task == null) {
-
-            System.out.println(
-                    "Task not found."
-            );
-
+        String input = scanner.nextLine().trim();
+        int choice;
+        try {
+            choice = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid selection.");
             return;
         }
 
-        System.out.println();
-
-        System.out.println(
-                "Current Status: "
-                + task.getStatus()
-        );
-
-        System.out.println();
-
-        System.out.println(
-                "Select New Status"
-        );
-
-        System.out.println(
-                "1. Dirty"
-        );
-
-        System.out.println(
-                "2. Cleaning In Progress"
-        );
-
-        System.out.println(
-                "3. Inspected"
-        );
-
-        System.out.println(
-                "4. Ready for Check-In"
-        );
-
-        System.out.print(
-                "Choice: "
-        );
-
-        int choice
-                = scanner.nextInt();
-
-        scanner.nextLine();
-
-        HousekeepingStatus newStatus;
-
         switch (choice) {
-
             case 1:
-                newStatus
-                        = HousekeepingStatus.DIRTY;
+                processCleaningAction(HousekeepingStatus.DIRTY,
+                        HousekeepingStatus.CLEANING_IN_PROGRESS,
+                        "ASSIGN CLEANING TASK");
                 break;
-
             case 2:
-                newStatus
-                        = HousekeepingStatus.CLEANING_IN_PROGRESS;
+                processCleaningAction(HousekeepingStatus.CLEANING_IN_PROGRESS,
+                        HousekeepingStatus.INSPECTED,
+                        "CONFIRM CLEANING COMPLETION");
                 break;
-
             case 3:
-                newStatus
-                        = HousekeepingStatus.INSPECTED;
+                processCleaningAction(HousekeepingStatus.INSPECTED,
+                        HousekeepingStatus.READY_FOR_CHECK_IN,
+                        "INSPECTION DONE");
                 break;
-
-            case 4:
-                newStatus
-                        = HousekeepingStatus.READY_FOR_CHECK_IN;
-                break;
-
             default:
+                System.out.println("Invalid selection.");
+        }
+    }
 
-                System.out.println(
-                        "Invalid status."
-                );
+    private void processCleaningAction(HousekeepingStatus currentStatus,
+            HousekeepingStatus nextStatus, String actionTitle) {
+        HousekeepingTask[] tasks = controller.getTasksByStatus(currentStatus);
 
-                return;
+        System.out.println("\n--- " + actionTitle + " ---");
+        if (tasks.length == 0) {
+            System.out.println("No rooms are currently " + currentStatus + ".");
+            return;
         }
 
-        String result
-                = controller.updateTaskStatus(
-                        taskId,
-                        newStatus
-                );
+        System.out.printf("%-10s %-10s %-8s %-10s %-25s%n",
+                "Task ID", "Room", "Floor", "Staff", "Status");
+        System.out.println("-----------------------------------------------------------------------");
+        for (HousekeepingTask task : tasks) {
+            System.out.printf("%-10s %-10s %-8d %-10s %-25s%n",
+                    task.getTaskId(), task.getRoomNumber(), task.getFloor(),
+                    task.getStaffId(), task.getStatus());
+        }
 
-        System.out.println(result);
+        System.out.print("Enter room number to update: ");
+        String roomNumber = scanner.nextLine().trim();
+        HousekeepingTask selectedTask = controller.searchTaskByRoom(roomNumber);
+
+        if (selectedTask == null || selectedTask.getStatus() != currentStatus) {
+            System.out.println("Invalid room. Select a room from the displayed list.");
+            return;
+        }
+
+        System.out.println(controller.updateTaskStatus(selectedTask.getTaskId(), nextStatus));
     }
 
     // =====================================================

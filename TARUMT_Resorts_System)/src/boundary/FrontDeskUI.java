@@ -7,6 +7,8 @@ import entity.GuestProfile;
 import entity.Room;
 import adt.MapInterface;
 import java.util.Scanner;
+import entity.Booking;
+import control.RegisterInterfaceController;
 
 public class FrontDeskUI {
 
@@ -47,7 +49,8 @@ public class FrontDeskUI {
             System.out.println("2. Search Available Rooms by Room Type");
             System.out.println("3. Generate Report: High Outstanding Bills");
             System.out.println("4. Generate Report: Occupancy Roster by Room Type");
-            System.out.println("5. Handle Late Check-Out Request");
+            System.out.println("5. Handle Normal Check-Out");
+            System.out.println("6. Handle Late Check-Out Request");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
 
@@ -71,13 +74,16 @@ public class FrontDeskUI {
                     handleRoomRosterReport();
                     break;
                 case 5:
+                    handleNormalCheckOut();
+                    break;
+                case 6:
                     HandleLateCheckOut();
                     break;
                 case 0:
                     System.out.println("\nExiting Front Desk System. Goodbye!");
                     break;
                 default:
-                    System.out.println("\n[Error] Invalid choice! Please enter a number from 0 to 5.");
+                    System.out.println("\n[Error] Invalid choice! Please enter a number from 0 to 6.");
             }
         } while (choice != 0);
     }
@@ -95,6 +101,27 @@ public class FrontDeskUI {
         System.out.println(housekeepingController.HandleLateCheckOut(roomNumber));
     }
 
+    public FrontDeskUI(HousekeepingController housekeepingController,
+            MapInterface<String, Room> roomMap, Scanner scanner,
+            RegisterInterfaceController bookingController) {
+        this.controller = new FrontDeskController(roomMap, bookingController);
+        this.housekeepingController = housekeepingController;
+        this.scanner = scanner;
+    }
+
+    private void handleNormalCheckOut() {
+        System.out.println("\n--- NORMAL CHECK-OUT ---");
+        System.out.print("Enter room number for check-out: ");
+        String roomNumber = scanner.nextLine().trim();
+
+        if (roomNumber.isEmpty()) {
+            System.out.println("[Error] Room number cannot be blank.");
+            return;
+        }
+
+        System.out.println(housekeepingController.handleNormalCheckOut(roomNumber));
+    }
+
     private void handleGuestSearch() {
         System.out.println("\n--- GUEST INSTANT SEARCH ---");
         System.out.print("Enter 8-digit confirmation number: ");
@@ -102,6 +129,13 @@ public class FrontDeskUI {
 
         if (!confNum.matches("\\d{8}")) {
             System.out.println("[Error] Confirmation number must contain exactly 8 digits.");
+            return;
+        }
+
+        Booking booking = controller.findWalkInBookingByConfirmation(confNum);
+        if (booking != null) {
+            System.out.println("\n[BOOKING MATCH FOUND]");
+            printBookingDetails(booking);
             return;
         }
 
@@ -249,6 +283,20 @@ public class FrontDeskUI {
                 guest.getRoomNumber() + " (" + guest.getRoomType() + ")");
         System.out.printf("| Stay Status         : %-25s |%n", guest.getStayStatus());
         System.out.printf("| Current Bill        : RM %-22.2f |%n", guest.getCurrentBilling());
+        System.out.println("+------------------------------------------------+");
+    }
+
+    private void printBookingDetails(Booking booking) {
+        System.out.println("+------------------------------------------------+");
+        System.out.printf("| Confirmation Number : %-25s |%n", booking.getConfirmationNumber());
+        System.out.printf("| Booking ID          : %-25s |%n", booking.getBookingId());
+        System.out.printf("| Guest Name          : %-25s |%n", booking.getGuestDisplayName());
+        System.out.printf("| Membership Type     : %-25s |%n", booking.getMembershipType());
+        System.out.printf("| Room Type Requested : %-25s |%n", booking.getRoomType());
+        System.out.printf("| Assigned Room       : %-25s |%n",
+                booking.getRoomId() == null ? "Not assigned" : booking.getRoomId());
+        System.out.printf("| Booking Status      : %-25s |%n", booking.getBookingStatus());
+        System.out.printf("| Number of Nights    : %-25d |%n", booking.getNumberOfNights());
         System.out.println("+------------------------------------------------+");
     }
 

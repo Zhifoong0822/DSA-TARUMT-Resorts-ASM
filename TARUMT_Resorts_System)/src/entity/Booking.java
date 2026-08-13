@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 public class Booking {
 
     private String bookingId;
+    private String confirmationNumber;
     private String waitingNumber;
 
     // Member information
@@ -30,12 +31,14 @@ public class Booking {
 
     public Booking(
             String bookingId,
+            String confirmationNumber,
             String waitingNumber,
             Member member,
             String roomType,
             int numberOfNights) {
 
         this.bookingId = bookingId;
+        this.confirmationNumber = confirmationNumber;
         this.waitingNumber = waitingNumber;
         this.member = member;
 
@@ -54,6 +57,7 @@ public class Booking {
 
     public Booking(
             String bookingId,
+            String confirmationNumber,
             String waitingNumber,
             String guestName,
             String guestIc,
@@ -61,6 +65,7 @@ public class Booking {
             int numberOfNights) {
 
         this.bookingId = bookingId;
+        this.confirmationNumber = confirmationNumber;
         this.waitingNumber = waitingNumber;
 
         this.guestName = guestName;
@@ -81,6 +86,10 @@ public class Booking {
 
     public String getBookingId() {
         return bookingId;
+    }
+
+    public String getConfirmationNumber() {
+        return confirmationNumber;
     }
 
     public String getWaitingNumber() {

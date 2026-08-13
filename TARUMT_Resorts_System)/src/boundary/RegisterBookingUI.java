@@ -4,10 +4,9 @@ import control.RegisterInterfaceController;
 import Dao.MemberDao;
 import entity.Member;
 import entity.Booking;
+import entity.Room;
+import adt.MapInterface;
 import java.util.Scanner;
-import walkinregistrationbooking.BookingReport;
-import walkinregistrationbooking.Room;
-import walkinregistrationbooking.RoomDao;
 
 public class RegisterBookingUI {
 
@@ -15,9 +14,7 @@ public class RegisterBookingUI {
 
     private RegisterInterfaceController controller;
 
-    private RoomDao roomDAO;
-
-    private BookingReport report;
+    private MapInterface<String, Room> roomMap;
 
     private boolean loggedIn = true;
 
@@ -27,17 +24,15 @@ public class RegisterBookingUI {
 
     public RegisterBookingUI(
             RegisterInterfaceController controller,
-            RoomDao roomDAO) {
+            MapInterface<String, Room> roomMap,
+            Scanner scanner) {
 
         this.controller = controller;
 
-        this.roomDAO = roomDAO;
+        this.roomMap = roomMap;
 
-        this.scanner =
-                new Scanner(System.in);
+        this.scanner = scanner;
 
-        this.report =
-                new BookingReport();
     }
 
     // =====================================================
@@ -45,6 +40,8 @@ public class RegisterBookingUI {
     // =====================================================
 
     public void start() {
+
+        loggedIn = true;
 
         while (loggedIn) {
 
@@ -414,12 +411,9 @@ public class RegisterBookingUI {
     // GET AVAILABLE ROOMS
     // =====================================================
 
-    java.util.List<Room> availableRooms =
-            roomDAO.getAvailableRooms(
-                    booking.getRoomType()
-            );
+    Room[] availableRooms = controller.getAvailableRooms(booking.getRoomType());
 
-    if (availableRooms.isEmpty()) {
+    if (availableRooms.length == 0) {
 
         System.out.println(
                 "\nNo available "
@@ -458,7 +452,7 @@ public class RegisterBookingUI {
 
         System.out.printf(
                 "%-10s %-15s %-25s%n",
-                room.getRoomId(),
+                room.getRoomNumber(),
                 room.getRoomType(),
                 room.getStatus()
         );
@@ -512,7 +506,15 @@ public class RegisterBookingUI {
 
     private void viewRooms() {
 
-        roomDAO.displayRooms();
+        Room[] rooms = controller.getAllRooms();
+        System.out.println("\n===== ROOM LIST =====");
+        System.out.println("Room ID | Room Type | Status");
+        System.out.println("----------------------------------------");
+        for (Room room : rooms) {
+            if (room != null) {
+                System.out.println(room);
+            }
+        }
     }
 
     // =====================================================
@@ -552,7 +554,7 @@ public class RegisterBookingUI {
 
     private void viewWaitingTimeReport() {
 
-        report.generateWaitingTimeReport(
+        controller.generateWaitingTimeReport(
                 controller.getBookingHistory()
         );
     }
@@ -563,7 +565,7 @@ public class RegisterBookingUI {
 
     private void viewQueuePriorityReport() {
 
-        report.generateQueuePriorityReport(
+        controller.generateQueuePriorityReport(
                 controller.getBookingHistory()
         );
     }
@@ -617,19 +619,19 @@ public class RegisterBookingUI {
         MemberDao memberDAO =
                 new MemberDao();
 
-        RoomDao roomDAO =
-                new RoomDao();
+        MapInterface<String, Room> roomMap = new Dao.RoomDAO().loadRooms();
 
         RegisterInterfaceController controller =
                 new RegisterInterfaceController(
                         memberDAO,
-                        roomDAO
+                        roomMap
                 );
 
         RegisterBookingUI ui =
                 new RegisterBookingUI(
                         controller,
-                        roomDAO
+                        roomMap,
+                        new Scanner(System.in)
                 );
 
         ui.start();

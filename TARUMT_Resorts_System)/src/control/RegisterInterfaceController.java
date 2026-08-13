@@ -7,18 +7,21 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import adt.CustomQueue;
+import adt.CustomHashMap;
+import adt.MapInterface;
 import java.time.Duration;
-import walkinregistrationbooking.Room;
-import walkinregistrationbooking.RoomDao;
+import entity.Room;
 
 public class RegisterInterfaceController {
 
     private MemberDao memberDAO;
-    private RoomDao roomDAO;
+    private MapInterface<String, Room> roomMap;
+    private HousekeepingController housekeepingController;
 
     private CustomQueue<Booking> bookingQueue;
 
     private List<Booking> bookingHistory;
+    private MapInterface<String, Booking> bookingConfirmationMap;
 
     private int bookingCounter = 1;
 
@@ -28,16 +31,53 @@ public class RegisterInterfaceController {
 
     public RegisterInterfaceController(
             MemberDao memberDAO,
-            RoomDao roomDAO) {
+            MapInterface<String, Room> roomMap) {
+        this(memberDAO, roomMap, null);
+    }
+
+    public RegisterInterfaceController(
+            MemberDao memberDAO,
+            MapInterface<String, Room> roomMap,
+            HousekeepingController housekeepingController) {
 
         this.memberDAO = memberDAO;
-        this.roomDAO = roomDAO;
+        this.roomMap = roomMap;
+        this.housekeepingController = housekeepingController;
 
         bookingQueue =
                 new CustomQueue<>();
 
         bookingHistory =
                 new ArrayList<>();
+
+        bookingConfirmationMap = new CustomHashMap<>();
+    }
+
+    public Room[] getAvailableRooms(String roomType) {
+        Room[] allRooms = roomMap.values(new Room[roomMap.size()]);
+        int count = 0;
+
+        for (Room room : allRooms) {
+            if (room != null && room.getRoomType().equalsIgnoreCase(roomType)
+                    && room.isAvailable()) {
+                count++;
+            }
+        }
+
+        Room[] availableRooms = new Room[count];
+        int index = 0;
+        for (Room room : allRooms) {
+            if (room != null && room.getRoomType().equalsIgnoreCase(roomType)
+                    && room.isAvailable()) {
+                availableRooms[index++] = room;
+            }
+        }
+
+        return availableRooms;
+    }
+
+    public Room[] getAllRooms() {
+        return roomMap.values(new Room[roomMap.size()]);
     }
 
     // =====================================================
@@ -75,6 +115,12 @@ public class RegisterInterfaceController {
                         bookingCounter
                 );
 
+        String confirmationNumber =
+                String.format(
+                        "%08d",
+                        bookingCounter
+                );
+
         // Generate waiting number
         String waitingNumber =
                 String.format(
@@ -91,6 +137,7 @@ if (member != null) {
     // Registered member
     booking = new Booking(
             bookingId,
+            confirmationNumber,
             waitingNumber,
             member,
             roomType,
@@ -102,6 +149,7 @@ if (member != null) {
     // Non-member guest
     booking = new Booking(
             bookingId,
+            confirmationNumber,
             waitingNumber,
             guestName,
             icNumber,
@@ -117,6 +165,7 @@ bookingQueue.enqueueByPriority(
 
 // Save to history
 bookingHistory.add(booking);
+bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         // =================================================
         // DISPLAY RESULT
         // =================================================
@@ -128,6 +177,11 @@ bookingHistory.add(booking);
         System.out.println(
                 "Booking ID       : "
                         + booking.getBookingId()
+        );
+
+        System.out.println(
+                "Confirmation No. : "
+                        + booking.getConfirmationNumber()
         );
 
         System.out.println(
@@ -223,10 +277,7 @@ bookingHistory.add(booking);
     // FIND SELECTED ROOM
     // =====================================================
 
-    Room room =
-            roomDAO.findRoomById(
-                    selectedRoomId
-            );
+    Room room = roomMap.get(selectedRoomId);
 
     if (room == null) {
 
@@ -298,7 +349,7 @@ bookingHistory.add(booking);
     // =====================================================
 
     booking.setRoomId(
-            room.getRoomId()
+            room.getRoomNumber()
     );
 
     booking.setRoomAssignmentTime(
@@ -316,6 +367,9 @@ bookingHistory.add(booking);
     room.setStatus(
             "Occupied"
     );
+    if (housekeepingController != null) {
+        housekeepingController.markRoomOccupied(room.getRoomNumber());
+    }
 
     // =====================================================
     // DISPLAY RESULT
@@ -381,10 +435,7 @@ bookingHistory.add(booking);
             String roomId) {
 
         // Find room
-        Room room =
-                roomDAO.findRoomById(
-                        roomId
-                );
+        Room room = roomMap.get(roomId);
 
         if (room == null) {
 
@@ -482,7 +533,7 @@ bookingHistory.add(booking);
 
         System.out.println(
                 "Room ID        : "
-                        + room.getRoomId()
+                        + room.getRoomNumber()
         );
 
         System.out.println(
@@ -566,6 +617,10 @@ bookingHistory.add(booking);
         }
 
         return null;
+    }
+
+    public Booking findBookingByConfirmation(String confirmationNumber) {
+        return bookingConfirmationMap.get(confirmationNumber);
     }
     
     public void generateWaitingTimeReport(

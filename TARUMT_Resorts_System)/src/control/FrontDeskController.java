@@ -7,6 +7,7 @@ import Dao.GuestDAO;
 import Dao.RoomDAO;
 import entity.GuestProfile;
 import entity.Room;
+import entity.Booking;
 
 public class FrontDeskController {
 
@@ -15,6 +16,7 @@ public class FrontDeskController {
     private GuestDAO guestDAO;
     private MapInterface<String, Room> roomMap;
     private RoomDAO roomDAO;
+    private RegisterInterfaceController bookingController;
 
     public FrontDeskController() {
         this.guestDAO = new GuestDAO();
@@ -29,8 +31,21 @@ public class FrontDeskController {
         this.roomMap = roomMap;
     }
 
+    public FrontDeskController(MapInterface<String, Room> roomMap,
+            RegisterInterfaceController bookingController) {
+        this(roomMap);
+        this.bookingController = bookingController;
+    }
+
     public GuestProfile findGuestByConfirmation(String confirmationNum) {
         return guestMap.get(confirmationNum);
+    }
+
+    public Booking findWalkInBookingByConfirmation(String confirmationNumber) {
+        if (bookingController == null) {
+            return null;
+        }
+        return bookingController.findBookingByConfirmation(confirmationNumber);
     }
 
     public Room[] getAvailableRoomsByType(String roomType) {

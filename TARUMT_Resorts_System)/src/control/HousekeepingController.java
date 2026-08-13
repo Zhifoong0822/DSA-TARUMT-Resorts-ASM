@@ -120,6 +120,78 @@ public class HousekeepingController {
         return null;
     }
 
+    public HousekeepingTask[] getTasksByStatus(HousekeepingStatus status) {
+        int count = 0;
+        for (int i = 0; i < taskCount; i++) {
+            if (tasks[i].getStatus() == status) {
+                count++;
+            }
+        }
+
+        HousekeepingTask[] matchingTasks = new HousekeepingTask[count];
+        int index = 0;
+        for (int i = 0; i < taskCount; i++) {
+            if (tasks[i].getStatus() == status) {
+                matchingTasks[index++] = tasks[i];
+            }
+        }
+
+        insertionSortByRoomNumber(matchingTasks, matchingTasks.length);
+        return matchingTasks;
+    }
+
+    public void markRoomOccupied(String roomNumber) {
+        HousekeepingTask task = searchTaskByRoom(roomNumber);
+        if (task != null) {
+            task.setStatus(HousekeepingStatus.OCCUPIED);
+        }
+    }
+
+    // =====================================================
+    // NORMAL CHECK-OUT
+    // =====================================================
+
+    public String handleNormalCheckOut(String roomNumber) {
+
+        Room room = roomMap.get(roomNumber);
+        if (room == null) {
+            return "Room " + roomNumber + " was not found in the room list.";
+        }
+
+        if (!room.getStatus().equalsIgnoreCase("Occupied")) {
+            return "Current status: " + room.getStatus() + "\n"
+                    + "Room " + roomNumber
+                    + " cannot be checked out because it is not occupied.";
+        }
+
+        HousekeepingTask task = searchTaskByRoom(roomNumber);
+
+        if (task == null) {
+            return "Room " + roomNumber + " was not found in the housekeeping task list.";
+        }
+
+        // A walk-in room assignment updates the shared room map immediately.
+        // Synchronize this housekeeping task before recording the checkout workflow.
+        if (task.getStatus() != HousekeepingStatus.OCCUPIED) {
+            task.setStatus(HousekeepingStatus.OCCUPIED);
+        }
+
+        StatusChange change = new StatusChange(
+                searchTaskIndexById(task.getTaskId()),
+                task.getTaskId(),
+                HousekeepingStatus.OCCUPIED,
+                HousekeepingStatus.DIRTY
+        );
+
+        statusHistory.push(change);
+        task.setStatus(HousekeepingStatus.DIRTY);
+        updateRoomStatus(task);
+
+        return "Normal check-out completed.\n"
+                + "Room " + task.getRoomNumber()
+                + " status changed to Dirty. Housekeeping may now begin cleaning.";
+    }
+
     // =====================================================
     // LATE CHECK-OUT
     // =====================================================
@@ -132,26 +204,29 @@ public class HousekeepingController {
             return "Room " + roomNumber + " was not found in the housekeeping task list.";
         }
 
-        HousekeepingStatus currentStatus = task.getStatus();
-
-        if (currentStatus == HousekeepingStatus.DIRTY) {
-            return "Current status: Dirty\n"
-                    + "Late check-out request recorded for room " + task.getRoomNumber() + ".";
+        if (task.getStatus() == HousekeepingStatus.OCCUPIED) {
+            return "Room " + task.getRoomNumber()
+                    + " is already Occupied. Housekeeping remains paused for the late check-out.";
         }
 
-        StatusChange change = new StatusChange(
-                searchTaskIndexById(task.getTaskId()),
-                task.getTaskId(),
-                currentStatus,
-                HousekeepingStatus.DIRTY
-        );
+        int rollbackCount = 0;
+        while (!statusHistory.isEmpty()
+                && statusHistory.peek().getTaskId().equalsIgnoreCase(task.getTaskId())) {
+            StatusChange latestChange = statusHistory.pop();
+            task.setStatus(latestChange.getPreviousStatus());
+            updateRoomStatus(task);
+            rollbackCount++;
+        }
 
-        statusHistory.push(change);
-        task.setStatus(HousekeepingStatus.DIRTY);
-        updateRoomStatus(task);
+        if (task.getStatus() != HousekeepingStatus.OCCUPIED) {
+            return "Late check-out could not restore room " + task.getRoomNumber()
+                    + " to Occupied because its earlier status change is not available on the rollback stack.";
+        }
 
         return "Late check-out request recorded.\n"
-                + "Room " + task.getRoomNumber() + " status changed to Dirty.";
+                + "Rolled back " + rollbackCount + " status update(s).\n"
+                + "Room " + task.getRoomNumber()
+                + " restored to Occupied; housekeeping is paused until actual check-out.";
     }
 
     public String handleCompletedLateCheckOut(String roomNumber) {
@@ -162,25 +237,15 @@ public class HousekeepingController {
             return "Room " + roomNumber + " was not found in the housekeeping task list.";
         }
 
-        if (task.getStatus() != HousekeepingStatus.DIRTY) {
+        if (task.getStatus() != HousekeepingStatus.OCCUPIED) {
             return "Current status: " + task.getStatus() + "\n"
                     + "Room " + task.getRoomNumber()
-                    + " cannot begin cleaning because its status is not Dirty.";
+                    + " must be checked out by Front Desk before cleaning can begin.";
         }
 
-        String result = updateTaskStatus(
-                task.getTaskId(),
-                HousekeepingStatus.CLEANING_IN_PROGRESS
-        );
-
-        if (result.startsWith("Status successfully updated")) {
-            return "Current status: Dirty\n"
-                    + "Late check-out completed.\n"
-                    + "Room " + task.getRoomNumber()
-                    + " status changed back to Cleaning in Progress.";
-        }
-
-        return result;
+        return "Late check-out is still active for room " + task.getRoomNumber()
+                + ". When the guest leaves, Front Desk must perform Normal Check-Out "
+                + "to change the room from Occupied to Dirty.";
     }
 
     // =====================================================

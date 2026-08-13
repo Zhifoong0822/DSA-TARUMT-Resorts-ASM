@@ -23,13 +23,13 @@ public class TARUMTResortsSystem {
         Scanner scanner = new Scanner(System.in);
         MapInterface<String, Room> roomMap = new RoomDAO().loadRooms();
         HousekeepingController housekeepingController = new HousekeepingController(roomMap);
-        FrontDeskUI frontDeskUI = new FrontDeskUI(housekeepingController, roomMap, scanner);
         HousekeepingUI housekeepingUI = new HousekeepingUI(housekeepingController, scanner);
         VipRoomAllocationUI vipRoomAllocationUI = new VipRoomAllocationUI(roomMap, scanner);
-        walkinregistrationbooking.RoomDao bookingRoomDAO = new walkinregistrationbooking.RoomDao();
         RegisterInterfaceController registerController =
-                new RegisterInterfaceController(new MemberDao(), bookingRoomDAO);
-        RegisterBookingUI registerBookingUI = new RegisterBookingUI(registerController, bookingRoomDAO);
+                new RegisterInterfaceController(new MemberDao(), roomMap, housekeepingController);
+        FrontDeskUI frontDeskUI = new FrontDeskUI(housekeepingController, roomMap, scanner,
+                registerController);
+        RegisterBookingUI registerBookingUI = new RegisterBookingUI(registerController, roomMap, scanner);
         int choice = -1;
 
         do {
