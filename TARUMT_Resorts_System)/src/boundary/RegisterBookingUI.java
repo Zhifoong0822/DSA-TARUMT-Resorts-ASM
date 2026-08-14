@@ -207,23 +207,13 @@ public class RegisterBookingUI {
                             + member.getIcNumber()
             );
 
-            if (member.getMembershipType()
-                    .equalsIgnoreCase("VIP")) {
+            System.out.println(
+                    "\nLOYALTY MEMBER REQUEST"
+            );
 
-                System.out.println(
-                        "\nVIP REQUEST"
-                );
-
-                System.out.println(
-                        "VIP member will receive queue priority."
-                );
-
-            } else {
-
-                System.out.println(
-                        "\nNORMAL MEMBER REQUEST"
-                );
-            }
+            System.out.println(
+                    "Member will be added into loyalty priority tree."
+            );
         }
 
         // -----------------------------------------------

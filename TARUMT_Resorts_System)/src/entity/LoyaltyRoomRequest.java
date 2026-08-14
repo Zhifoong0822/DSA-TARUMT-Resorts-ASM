@@ -95,40 +95,28 @@ public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
         if (loyaltyTier == null) {
             return 0;
         }
-        if (loyaltyTier.equalsIgnoreCase("Diamond") || loyaltyTier.equalsIgnoreCase("VIP")) {
-            return 5;
-        }
         if (loyaltyTier.equalsIgnoreCase("Platinum")) {
-            return 4;
-        }
-        if (loyaltyTier.equalsIgnoreCase("Gold")) {
             return 3;
         }
-        if (loyaltyTier.equalsIgnoreCase("Silver") || loyaltyTier.equalsIgnoreCase("NORMAL")) {
+        if (loyaltyTier.equalsIgnoreCase("Diamond")) {
             return 2;
         }
-        return 1;
+        if (loyaltyTier.equalsIgnoreCase("Elite")) {
+            return 1;
+        }
+        return 0;
     }
 
     public int getPriorityScore() {
-        return (getTierRank() * 10000) + ((int) totalSpending / 10) + (stayNights * 80) - bookingOrder;
+        return (getTierRank() * 10000) - bookingOrder;
     }
 
     @Override
     public int compareTo(LoyaltyRoomRequest other) {
-        if (getTierRank() != other.getTierRank()) {
-            return getTierRank() - other.getTierRank();
+        if (getPriorityScore() != other.getPriorityScore()) {
+            return getPriorityScore() - other.getPriorityScore();
         }
-        if (totalSpending > other.totalSpending) {
-            return 1;
-        }
-        if (totalSpending < other.totalSpending) {
-            return -1;
-        }
-        if (stayNights != other.stayNights) {
-            return stayNights - other.stayNights;
-        }
-        return other.bookingOrder - bookingOrder;
+        return requestId.compareToIgnoreCase(other.requestId);
     }
 
     @Override

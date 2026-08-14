@@ -9,6 +9,7 @@ import adt.CustomQueue;
 import adt.CustomHashMap;
 import adt.MapInterface;
 import java.time.Duration;
+import entity.LoyaltyRoomRequest;
 import entity.Room;
 
 public class RegisterInterfaceController {
@@ -16,6 +17,7 @@ public class RegisterInterfaceController {
     private MemberDao memberDAO;
     private MapInterface<String, Room> roomMap;
     private HousekeepingController housekeepingController;
+    private VipRoomAllocationController vipController;
 
     private CustomQueue<Booking> bookingQueue;
 
@@ -38,10 +40,19 @@ public class RegisterInterfaceController {
             MemberDao memberDAO,
             MapInterface<String, Room> roomMap,
             HousekeepingController housekeepingController) {
+        this(memberDAO, roomMap, housekeepingController, null);
+    }
+
+    public RegisterInterfaceController(
+            MemberDao memberDAO,
+            MapInterface<String, Room> roomMap,
+            HousekeepingController housekeepingController,
+            VipRoomAllocationController vipController) {
 
         this.memberDAO = memberDAO;
         this.roomMap = roomMap;
         this.housekeepingController = housekeepingController;
+        this.vipController = vipController;
 
         bookingQueue =
                 new CustomQueue<>();
@@ -157,10 +168,52 @@ if (member != null) {
     );
 }
 
-// Insert according to priority
-bookingQueue.enqueueByPriority(
-        booking
-);
+if (member != null && isLoyaltyTier(member.getMembershipType()) && vipController != null) {
+    LoyaltyRoomRequest request = vipController.addRequest(
+            member.getMemberName(),
+            member.getMembershipType(),
+            roomType,
+            numberOfNights,
+            booking.getTotalBilling()
+    );
+
+    System.out.println(
+            "\n===== LOYALTY REQUEST SUCCESSFUL ====="
+    );
+
+    System.out.println(
+            "Request ID       : "
+                    + request.getRequestId()
+    );
+
+    System.out.println(
+            "Guest            : "
+                    + request.getGuestName()
+    );
+
+    System.out.println(
+            "Tier             : "
+                    + request.getLoyaltyTier()
+    );
+
+    System.out.println(
+            "Room Type        : "
+                    + request.getRoomType()
+    );
+
+    System.out.println(
+            "Number of Nights : "
+                    + request.getStayNights()
+    );
+
+    System.out.println(
+            "\nAdded into loyalty priority tree."
+    );
+    return;
+}
+
+// Normal guests use first come first serve
+bookingQueue.enqueue(booking);
 
 // Save to history
 bookingHistory.add(booking);
@@ -234,6 +287,11 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     // =====================================================
 
    public void callNextGuest(String selectedRoomId) {
+
+    if (vipController != null && vipController.hasWaitingRequests()) {
+        callNextLoyaltyMember(selectedRoomId);
+        return;
+    }
 
     if (bookingQueue.isEmpty()) {
 
@@ -452,13 +510,131 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     );
 }
 
+private void callNextLoyaltyMember(String selectedRoomId) {
+
+    LoyaltyRoomRequest request = vipController.peekNextRequest();
+
+    if (request == null) {
+        System.out.println(
+                "\nThere are no loyalty members waiting."
+        );
+        return;
+    }
+
+    Room room = roomMap.get(selectedRoomId);
+
+    if (room == null) {
+        System.out.println(
+                "\nRoom ID not found."
+        );
+        return;
+    }
+
+    if (!room.getRoomType()
+            .equalsIgnoreCase(
+                    request.getRoomType()
+            )) {
+
+        System.out.println(
+                "\nInvalid room selection."
+        );
+
+        System.out.println(
+                "Member requested : "
+                        + request.getRoomType()
+        );
+
+        System.out.println(
+                "Selected room    : "
+                        + room.getRoomType()
+        );
+        return;
+    }
+
+    if (!room.isAvailable()) {
+        System.out.println(
+                "\nRoom "
+                        + selectedRoomId
+                        + " is not available."
+        );
+
+        System.out.println(
+                "Current status: "
+                        + room.getStatus()
+        );
+        return;
+    }
+
+    request = vipController.removeNextRequest();
+    vipController.saveAllocatedRequest(request, room.getRoomNumber());
+
+    room.setStatus(
+            "Occupied"
+    );
+
+    if (housekeepingController != null) {
+        housekeepingController.markRoomOccupied(room.getRoomNumber());
+    }
+
+    System.out.println(
+            "\n===== LOYALTY MEMBER ROOM ASSIGNED ====="
+    );
+
+    System.out.println(
+            "Request ID      : "
+                    + request.getRequestId()
+    );
+
+    System.out.println(
+            "Guest           : "
+                    + request.getGuestName()
+    );
+
+    System.out.println(
+            "Tier            : "
+                    + request.getLoyaltyTier()
+    );
+
+    System.out.println(
+            "Room Type       : "
+                    + request.getRoomType()
+    );
+
+    System.out.println(
+            "Room Number     : "
+                    + request.getAllocatedRoomNo()
+    );
+
+    System.out.println(
+            "Number of Nights: "
+                    + request.getStayNights()
+    );
+
+    System.out.println(
+            "\nPlease proceed to room "
+                    + request.getAllocatedRoomNo()
+                    + "."
+    );
+}
+
     // =====================================================
     // DISPLAY QUEUE
     // =====================================================
 
     public void displayBookingQueue() {
 
+        if (vipController != null && vipController.hasWaitingRequests()) {
+            System.out.println(
+                    "\n===== LOYALTY MEMBER PRIORITY TREE ====="
+            );
+            displayLoyaltyWaitingList();
+        }
+
         if (bookingQueue.isEmpty()) {
+
+            if (vipController != null && vipController.hasWaitingRequests()) {
+                return;
+            }
 
             System.out.println(
                     "\nNo bookings are waiting."
@@ -474,11 +650,70 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         bookingQueue.display();
     }
 
+    public void displayGuestQueueOnly() {
+        if (bookingQueue.isEmpty()) {
+            System.out.println(
+                    "\nNo standard guests are waiting."
+            );
+            return;
+        }
+
+        System.out.println(
+                "\n===== STANDARD GUEST QUEUE ====="
+        );
+
+        bookingQueue.display();
+    }
+
+    private void displayLoyaltyWaitingList() {
+        LoyaltyRoomRequest[] requests =
+                vipController.getWaitingPriorityReport("All", "Elite");
+
+        System.out.printf(
+                "%-10s %-15s %-12s %-12s %-6s%n",
+                "Req ID",
+                "Name",
+                "Tier",
+                "Room Type",
+                "Nights"
+        );
+
+        System.out.println(
+                "---------------------------------------------------------------"
+        );
+
+        for (int i = 0; i < requests.length; i++) {
+            System.out.printf(
+                    "%-10s %-15s %-12s %-12s %-6d%n",
+                    requests[i].getRequestId(),
+                    requests[i].getGuestName(),
+                    requests[i].getLoyaltyTier(),
+                    requests[i].getRoomType(),
+                    requests[i].getStayNights()
+            );
+        }
+    }
+
     // =====================================================
     // PEEK
     // =====================================================
 
     public Booking peekNextBooking() {
+
+        if (vipController != null && vipController.hasWaitingRequests()) {
+            LoyaltyRoomRequest request = vipController.peekNextRequest();
+
+            return new Booking(
+                    request.getRequestId(),
+                    request.getRequestId(),
+                    request.getRequestId(),
+                    request.getGuestName(),
+                    "",
+                    request.getLoyaltyTier(),
+                    request.getRoomType(),
+                    request.getStayNights()
+            );
+        }
 
         return bookingQueue.peek();
     }
@@ -1191,6 +1426,13 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         }
 
         return count;
+    }
+
+    private boolean isLoyaltyTier(String tier) {
+        return tier != null
+                && (tier.equalsIgnoreCase("Platinum")
+                || tier.equalsIgnoreCase("Diamond")
+                || tier.equalsIgnoreCase("Elite"));
     }
 
     // FORMAT WAITING TIME

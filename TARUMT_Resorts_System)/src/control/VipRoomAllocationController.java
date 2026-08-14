@@ -42,6 +42,26 @@ public class VipRoomAllocationController {
         return request;
     }
 
+    public boolean hasWaitingRequests() {
+        return !waitingRequests.isEmpty();
+    }
+
+    public LoyaltyRoomRequest peekNextRequest() {
+        return waitingRequests.getTop();
+    }
+
+    public LoyaltyRoomRequest removeNextRequest() {
+        return waitingRequests.removeTop();
+    }
+
+    public void saveAllocatedRequest(LoyaltyRoomRequest request, String roomNumber) {
+        if (request == null) {
+            return;
+        }
+        request.setAllocatedRoomNo(roomNumber);
+        addAllocatedRequest(request);
+    }
+
     public LoyaltyRoomRequest allocateNextRoom() {
         if (waitingRequests.isEmpty()) {
             return null;

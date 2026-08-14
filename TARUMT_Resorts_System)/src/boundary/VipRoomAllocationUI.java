@@ -1,19 +1,18 @@
 // Author: Yong Shen
 package boundary;
 
+import control.RegisterInterfaceController;
 import control.VipRoomAllocationController;
 import adt.MapInterface;
 import entity.LoyaltyRoomRequest;
 import entity.Room;
 import java.util.Scanner;
-import entity.Member;
-import Dao.MemberDao;
 
 public class VipRoomAllocationUI {
 
     private VipRoomAllocationController controller;
+    private RegisterInterfaceController registerController;
     private Scanner scanner;
-    private MemberDao memberDao;
 
     public VipRoomAllocationUI() {
         this(new VipRoomAllocationController(), new Scanner(System.in));
@@ -26,7 +25,14 @@ public class VipRoomAllocationUI {
     public VipRoomAllocationUI(VipRoomAllocationController controller, Scanner scanner) {
         this.controller = controller;
         this.scanner = scanner;
-        this.memberDao = new MemberDao();
+    }
+
+    public VipRoomAllocationUI(VipRoomAllocationController controller,
+            RegisterInterfaceController registerController,
+            Scanner scanner) {
+        this.controller = controller;
+        this.registerController = registerController;
+        this.scanner = scanner;
     }
 
     public void startMenu() {
@@ -35,12 +41,10 @@ public class VipRoomAllocationUI {
             System.out.println(" \nVIP & LOYALTY TIER PRIORITY ROOM ALLOCATION");
             System.out.println("-----------------------------------------------");
             System.out.println("1. Add room request");
-            System.out.println("2. Allocate next priority room");
-            System.out.println("3. Allocate all possible rooms");
-            System.out.println("4. Search request by ID");
-            System.out.println("5. Report: Waiting priority list");
-            System.out.println("6. Report: Allocation summary");
-            System.out.println("7. View room status");
+            System.out.println("2. Search request by ID");
+            System.out.println("3. Report: Waiting priority list");
+            System.out.println("4. Report: Allocation summary");
+            System.out.println("5. View room status");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
             choice = readInt();
@@ -50,21 +54,15 @@ public class VipRoomAllocationUI {
                     addRequest();
                     break;
                 case 2:
-                    allocateNext();
-                    break;
-                case 3:
-                    allocateAll();
-                    break;
-                case 4:
                     searchRequest();
                     break;
-                case 5:
+                case 3:
                     waitingPriorityReport();
                     break;
-                case 6:
+                case 4:
                     allocationSummaryReport();
                     break;
-                case 7:
+                case 5:
                     displayRooms();
                     break;
                 case 0:
@@ -79,29 +77,13 @@ public class VipRoomAllocationUI {
     private void addRequest() {
         System.out.println("\n--- ADD ROOM REQUEST ---");
 
-        System.out.print("Does customer have membership? (Y/N): ");
-        String hasMember = scanner.nextLine().trim();
-
         System.out.print("Enter IC/Passport: ");
-        String identityNo = scanner.nextLine().trim();
+        scanner.nextLine().trim();
 
-        Member member = null;
-        String guestName;
-        String loyaltyTier;
+        System.out.print("Guest name: ");
+        String guestName = scanner.nextLine().trim();
 
-        if (hasMember.equalsIgnoreCase("Y")) {
-            member = memberDao.findMemberByIC(identityNo);
-        }
-
-        if (member != null) {
-            guestName = member.getMemberName();
-            loyaltyTier = member.getMembershipType();
-            System.out.println("Member found: " + guestName + " (" + loyaltyTier + ")");
-        } else {
-            System.out.print("Guest name: ");
-            guestName = scanner.nextLine().trim();
-            loyaltyTier = "GUEST";
-        }
+        String loyaltyTier = readLoyaltyTier();
 
         System.out.print("Room type (Deluxe/Suite/Penthouse): ");
         String roomType = scanner.nextLine().trim();
@@ -150,12 +132,16 @@ public class VipRoomAllocationUI {
         System.out.println("\n--- WAITING PRIORITY REPORT ---");
         System.out.print("Room type filter (All/Deluxe/Suite/Penthouse): ");
         String roomType = scanner.nextLine().trim();
-        System.out.print("Minimum tier (GUEST/NORMAL/VIP): ");
+        System.out.print("Minimum tier (PLATINUM/DIAMOND/ELITE): ");
         String tier = scanner.nextLine().trim();
 
         LoyaltyRoomRequest[] report = controller.getWaitingPriorityReport(roomType, tier);
         System.out.println("\nFiltered by room type and tier. Sorted by highest priority.");
         displayRequestReport(report);
+
+        if (registerController != null) {
+            registerController.displayGuestQueueOnly();
+        }
     }
 
     private void allocationSummaryReport() {
@@ -237,6 +223,27 @@ public class VipRoomAllocationUI {
             return Double.parseDouble(scanner.nextLine().trim());
         } catch (NumberFormatException e) {
             return 0;
+        }
+    }
+
+    private String readLoyaltyTier() {
+        while (true) {
+            System.out.print("Loyalty tier (Elite/Diamond/Platinum): ");
+            String type = scanner.nextLine().trim();
+
+            if (type.equalsIgnoreCase("Elite")) {
+                return "Elite";
+            }
+
+            if (type.equalsIgnoreCase("Diamond")) {
+                return "Diamond";
+            }
+
+            if (type.equalsIgnoreCase("Platinum")) {
+                return "Platinum";
+            }
+
+            System.out.println("Please enter Elite, Diamond or Platinum.");
         }
     }
 

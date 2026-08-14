@@ -15,6 +15,7 @@ public class Booking {
     // Guest information
     private String guestName;
     private String guestIc;
+    private String guestType;
 
     private String roomType;
     private int numberOfNights;
@@ -72,6 +73,35 @@ public class Booking {
 
         this.guestName = guestName;
         this.guestIc = guestIc;
+        this.guestType = "GUEST";
+
+        this.roomType = roomType;
+        this.numberOfNights = numberOfNights;
+        this.totalBilling = calculateTotalBilling(roomType, numberOfNights);
+
+        this.registrationTime =
+                LocalDateTime.now();
+
+        this.bookingStatus = "WAITING";
+    }
+
+    public Booking(
+            String bookingId,
+            String confirmationNumber,
+            String waitingNumber,
+            String guestName,
+            String guestIc,
+            String guestType,
+            String roomType,
+            int numberOfNights) {
+
+        this.bookingId = bookingId;
+        this.confirmationNumber = confirmationNumber;
+        this.waitingNumber = waitingNumber;
+
+        this.guestName = guestName;
+        this.guestIc = guestIc;
+        this.guestType = guestType;
 
         this.roomType = roomType;
         this.numberOfNights = numberOfNights;
@@ -183,6 +213,10 @@ public class Booking {
         if (member != null) {
 
             return member.getMembershipType();
+        }
+
+        if (guestType != null) {
+            return guestType;
         }
 
         return "GUEST";

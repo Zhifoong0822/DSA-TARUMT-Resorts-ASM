@@ -6,6 +6,7 @@ import boundary.FrontDeskUI;
 import boundary.HousekeepingUI;
 import boundary.VipRoomAllocationUI;
 import control.HousekeepingController;
+import control.VipRoomAllocationController;
 import Dao.RoomDAO;
 import adt.MapInterface;
 import entity.Room;
@@ -24,9 +25,12 @@ public class TARUMTResortsSystem {
         MapInterface<String, Room> roomMap = new RoomDAO().loadRooms();
         HousekeepingController housekeepingController = new HousekeepingController(roomMap);
         HousekeepingUI housekeepingUI = new HousekeepingUI(housekeepingController, scanner);
-        VipRoomAllocationUI vipRoomAllocationUI = new VipRoomAllocationUI(roomMap, scanner);
+        VipRoomAllocationController vipController = new VipRoomAllocationController(roomMap);
         RegisterInterfaceController registerController =
-                new RegisterInterfaceController(new MemberDao(), roomMap, housekeepingController);
+                new RegisterInterfaceController(new MemberDao(), roomMap, housekeepingController,
+                        vipController);
+        VipRoomAllocationUI vipRoomAllocationUI =
+                new VipRoomAllocationUI(vipController, registerController, scanner);
         FrontDeskUI frontDeskUI = new FrontDeskUI(housekeepingController, roomMap, scanner,
                 registerController);
         RegisterBookingUI registerBookingUI = new RegisterBookingUI(registerController, roomMap, scanner);
