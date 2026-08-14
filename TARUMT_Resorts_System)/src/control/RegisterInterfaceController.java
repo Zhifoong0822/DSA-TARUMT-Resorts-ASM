@@ -208,6 +208,11 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
                         + booking.getNumberOfNights()
         );
 
+        System.out.printf(
+                "Total Billing    : RM %.2f%n",
+                booking.getTotalBilling()
+        );
+
         System.out.println(
                 "Registration Time: "
                         + booking
@@ -275,6 +280,11 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     System.out.println(
             "Number of Nights : "
                     + booking.getNumberOfNights()
+    );
+
+    System.out.printf(
+            "Total Billing    : RM %.2f%n",
+            booking.getTotalBilling()
     );
 
     // =====================================================
@@ -440,123 +450,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
                     + booking.getRoomId()
                     + "."
     );
-}    public void logoutGuest(
-            String roomId) {
-
-        // Find room
-        Room room = roomMap.get(roomId);
-
-        if (room == null) {
-
-            System.out.println(
-                    "Room ID not found."
-            );
-
-            return;
-        }
-
-        // Check room status
-        if (!room.getStatus()
-                .equalsIgnoreCase(
-                        "Occupied"
-                )) {
-
-            System.out.println(
-                    "This room is not currently occupied."
-            );
-
-            return;
-        }
-
-        Booking booking = null;
-
-        // =================================================
-        // SEARCH BOOKING HISTORY
-        // =================================================
-
-        for (int i =0;i<bookingHistory.size();i++) {
-            Booking b= bookingHistory.get(i);
-            
-            if (roomId.equalsIgnoreCase(
-                    b.getRoomId())
-                    && b.getBookingStatus()
-                    .equalsIgnoreCase(
-                            "ASSIGNED"
-                    )) {
-
-                booking = b;
-
-                break;
-            }
-        }
-
-        if (booking == null) {
-
-            System.out.println(
-                    "No active booking found for this room."
-            );
-
-            return;
-        }
-
-        // =================================================
-        // UPDATE BOOKING
-        // =================================================
-
-        booking.setBookingStatus(
-                "COMPLETED"
-        );
-
-        // =================================================
-        // UPDATE ROOM
-        // =================================================
-
-        room.setStatus(
-                "Cleaning In Progress"
-        );
-
-        // =================================================
-        // DISPLAY RESULT
-        // =================================================
-
-        System.out.println(
-                "\n===== GUEST LOGOUT SUCCESSFUL ====="
-        );
-
-        System.out.println(
-                "Guest          : "
-                        + booking
-                        .getGuestDisplayName()
-        );
-
-        System.out.println(
-                "Type           : "
-                        + booking
-                        .getMembershipType()
-        );
-
-        System.out.println(
-                "Booking ID     : "
-                        + booking
-                        .getBookingId()
-        );
-
-        System.out.println(
-                "Room ID        : "
-                        + room.getRoomNumber()
-        );
-
-        System.out.println(
-                "Booking Status : "
-                        + booking
-                        .getBookingStatus()
-        );
-
-        System.out.println(
-                "Room Status    : "
-                        + room.getStatus()
-        );
-    }
+}
 
     // =====================================================
     // DISPLAY QUEUE
@@ -871,6 +765,10 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         CustomList<Booking> registrationOrder;
         registrationOrder = new CustomList<>();
 
+        for (int i = 0; i < bookings.size(); i++) {
+            registrationOrder.add(bookings.get(i));
+        }
+
         // Sort according to registration time
         sortByRegistrationTime(
                 registrationOrder
@@ -945,10 +843,8 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
                     "%-10s %-8s %-15s %-10s %-16d %-14s%n",
                     booking.getBookingId(),
                     booking.getWaitingNumber(),
-                    booking.getMember()
-                            .getMemberName(),
-                    booking.getMember()
-                            .getMembershipType(),
+                    booking.getGuestDisplayName(),
+                    booking.getMembershipType(),
                     registerOrder,
                     assignment
             );
@@ -965,8 +861,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         for (int i =0; i< bookings.size();i++) {
             Booking booking=bookings.get(i);
 
-            if (booking.getMember()
-                    .getMembershipType()
+            if (booking.getMembershipType()
                     .equalsIgnoreCase("VIP")) {
 
                 vipCount++;
@@ -1002,8 +897,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
                         if (otherRegistrationOrder
                                 < vipRegistrationOrder
-                                && other.getMember()
-                                .getMembershipType()
+                                && other.getMembershipType()
                                 .equalsIgnoreCase("NORMAL")) {
 
                             int otherAssignmentOrder =
@@ -1075,13 +969,9 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
             System.out.println(
                     "\nFirst Registered           : "
-                            + firstRegistered
-                            .getMember()
-                            .getMemberName()
+                            + firstRegistered.getGuestDisplayName()
                             + " ("
-                            + firstRegistered
-                            .getMember()
-                            .getMembershipType()
+                            + firstRegistered.getMembershipType()
                             .toUpperCase()
                             + ")"
             );
@@ -1094,13 +984,9 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
             System.out.println(
                     "First Served               : "
-                            + firstAssigned
-                            .getMember()
-                            .getMemberName()
+                            + firstAssigned.getGuestDisplayName()
                             + " ("
-                            + firstAssigned
-                            .getMember()
-                            .getMembershipType()
+                            + firstAssigned.getMembershipType()
                             .toUpperCase()
                             + ")"
             );
@@ -1245,8 +1131,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         for (int i=0;i< registrationOrder.size();i++) {
             Booking normal = registrationOrder.get(i);
             
-            if (!normal.getMember()
-                    .getMembershipType()
+            if (!normal.getMembershipType()
                     .equalsIgnoreCase("NORMAL")) {
 
                 continue;
@@ -1271,10 +1156,9 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
             boolean servedBeforeVip = true;
 
             for (int j =0; j< registrationOrder.size();j++) {
-            Booking vip= registrationOrder.get(i);
+            Booking vip= registrationOrder.get(j);
 
-                if (!vip.getMember()
-                        .getMembershipType()
+                if (!vip.getMembershipType()
                         .equalsIgnoreCase("VIP")) {
 
                     continue;

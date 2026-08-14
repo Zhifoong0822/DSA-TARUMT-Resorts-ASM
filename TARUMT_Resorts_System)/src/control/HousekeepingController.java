@@ -405,19 +405,11 @@ public class HousekeepingController {
         return statusHistory.peek();
     }
 
-    // =====================================================
-    // REPORT 1
     // ROOM STATUS REPORT
     // Filtering + Searching + Sorting
-    // =====================================================
+    public String generateRoomStatusReport(int floorFilter, HousekeepingStatus statusFilter, LocalDate dateFilter) {
 
-    public String generateRoomStatusReport(
-            int floorFilter,
-            HousekeepingStatus statusFilter,
-            LocalDate dateFilter) {
-
-        HousekeepingTask[] results
-                = new HousekeepingTask[MAX_TASKS];
+        HousekeepingTask[] results = new HousekeepingTask[MAX_TASKS];
 
         int resultCount = 0;
 
@@ -454,6 +446,14 @@ public class HousekeepingController {
                 resultCount
         );
 
+        String floorLabel = floorFilter == 0
+                ? "All"
+                : String.valueOf(floorFilter);
+
+        String statusLabel = statusFilter == null
+                ? "All"
+                : statusFilter.toString();
+
         StringBuilder report
                 = new StringBuilder();
 
@@ -464,6 +464,12 @@ public class HousekeepingController {
 
         report.append(
                 "                    HOUSEKEEPING ROOM STATUS REPORT\n"
+        );
+
+        report.append(
+                "          Filters: Floor = " + floorLabel
+                + ", Status = " + statusLabel
+                + " | Sorted by Room Number\n"
         );
 
         report.append(
@@ -521,10 +527,7 @@ public class HousekeepingController {
         return report.toString();
     }
 
-    // =====================================================
     // INSERTION SORT BY ROOM NUMBER
-    // =====================================================
-
     private void insertionSortByRoomNumber(
             HousekeepingTask[] array,
             int count) {
@@ -552,13 +555,16 @@ public class HousekeepingController {
         }
     }
 
-    // =====================================================
-    // REPORT 2
     // STAFF PERFORMANCE REPORT
-    // =====================================================
-
     public String generateStaffPerformanceReport(
             LocalDate dateFilter) {
+
+        return generateStaffPerformanceReport(dateFilter, null);
+    }
+
+    public String generateStaffPerformanceReport(
+            LocalDate dateFilter,
+            String roomTypeFilter) {
 
         String[] staffIds = new String[MAX_TASKS];
 
@@ -585,7 +591,16 @@ public class HousekeepingController {
                     = task.getStatus()
                     == HousekeepingStatus.READY_FOR_CHECK_IN;
 
-            if (dateMatch && completed) {
+            Room room = roomMap.get(task.getRoomNumber());
+
+            boolean roomTypeMatch
+                    = roomTypeFilter == null
+                    || roomTypeFilter.trim().isEmpty()
+                    || roomTypeFilter.equalsIgnoreCase("All")
+                    || (room != null && room.getRoomType()
+                            .equalsIgnoreCase(roomTypeFilter));
+
+            if (dateMatch && roomTypeMatch && completed) {
 
                 int staffIndex
                         = findStaffIndex(
@@ -616,11 +631,8 @@ public class HousekeepingController {
             }
         }
 
-        // ============================================
         // SORT STAFF BY NUMBER OF COMPLETED TASKS
         // Highest -> Lowest
-        // ============================================
-
         insertionSortStaffPerformance(
                 staffIds,
                 completedTasks,
@@ -642,16 +654,22 @@ public class HousekeepingController {
         );
 
         report.append(
+                "           Filter: Room Type = "
+                + (roomTypeFilter == null ? "All" : roomTypeFilter)
+                + " | Sorted by Tasks Completed"
+                + "\n"
+        );
+
+        report.append(
                 "================================================================\n"
         );
 
         report.append(
                 String.format(
-                        "%-6s %-12s %-18s %-15s\n",
+                        "%-6s %-12s %-18s\n",
                         "Rank",
                         "Staff ID",
-                        "Tasks Completed",
-                        "Avg. Minutes"
+                        "Tasks Completed"
                 )
         );
 
@@ -662,23 +680,12 @@ public class HousekeepingController {
         int overallCompleted = 0;
 
         for (int i = 0; i < staffCount; i++) {
-
-            int averageMinutes = 0;
-
-            if (completedTasks[i] > 0) {
-
-                averageMinutes
-                        = totalMinutes[i]
-                        / completedTasks[i];
-            }
-
             report.append(
                     String.format(
-                            "%-6d %-12s %-18d %-15d\n",
+                            "%-6d %-12s %-18d\n",
                             i + 1,
                             staffIds[i],
-                            completedTasks[i],
-                            averageMinutes
+                            completedTasks[i]
                     )
             );
 

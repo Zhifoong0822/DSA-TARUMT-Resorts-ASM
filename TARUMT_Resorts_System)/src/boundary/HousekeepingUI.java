@@ -12,6 +12,7 @@ import entity.StatusChange;
 
 import java.time.LocalDate;
 import java.util.Scanner;
+import utility.InputHelper;
 /**
  *
  * @author Gigabyte
@@ -40,33 +41,9 @@ public class HousekeepingUI {
 
     public void run() {
 
-        int choice;
-
-        do {
-
             displayMenu();
 
-            System.out.print(
-                    "Enter your choice: "
-            );
-
-            while (!scanner.hasNextInt()) {
-
-                System.out.println(
-                        "Invalid input."
-                );
-
-                scanner.next();
-
-                System.out.print(
-                        "Enter your choice: "
-                );
-            }
-
-            choice
-                    = scanner.nextInt();
-
-            scanner.nextLine();
+            int choice = InputHelper.readIntInRange(scanner, "Enter your choice: ", 0, 7);
 
             switch (choice) {
 
@@ -87,18 +64,14 @@ public class HousekeepingUI {
                     break;
 
                 case 5:
-                    handleCompletedLateCheckOut();
-                    break;
-
-                case 6:
                     viewLatestUpdate();
                     break;
 
-                case 7:
+                case 6:
                     generateRoomStatusReport();
                     break;
 
-                case 8:
+                case 7:
                     generateStaffPerformanceReport();
                     break;
 
@@ -113,13 +86,7 @@ public class HousekeepingUI {
                             "Invalid selection."
                     );
             }
-
-        } while (choice != 0);
     }
-
-    // =====================================================
-    // MENU
-    // =====================================================
 
     private void displayMenu() {
 
@@ -137,140 +104,68 @@ public class HousekeepingUI {
                 "=================================================="
         );
 
-        System.out.println(
-                "1. View Housekeeping Tasks"
-        );
+        System.out.println("1. View Housekeeping Tasks");
 
-        System.out.println(
-                "2. Search Housekeeping Task"
-        );
+        System.out.println("2. Search Housekeeping Task");
 
-        System.out.println(
-                "3. Update Cleaning Status"
-        );
+        System.out.println("3. Update Cleaning Status");
 
-        System.out.println(
-                "4. Undo Latest Status Update"
-        );
+        System.out.println("4. Undo Latest Status Update");
 
-        System.out.println(
-                "5. Check Late Check-Out Status"
-        );
+        System.out.println("5. View Latest Status Update");
 
-        System.out.println(
-                "6. View Latest Status Update"
-        );
+        System.out.println("6. Generate Room Status Report");
 
-        System.out.println(
-                "7. Generate Room Status Report"
-        );
+        System.out.println("7. Generate Staff Performance Report");
 
-        System.out.println(
-                "8. Generate Staff Performance Report"
-        );
-
-        System.out.println(
-                "0. Exit"
-        );
+        System.out.println("0. Exit");
 
         System.out.println(
                 "=================================================="
         );
     }
 
-    private void handleCompletedLateCheckOut() {
-
-        System.out.print("Enter room number: ");
-
-        String roomNumber = scanner.nextLine().trim();
-
-        if (roomNumber.isEmpty()) {
-            System.out.println("Room number cannot be blank.");
-            return;
-        }
-
-        System.out.println(
-                controller.handleCompletedLateCheckOut(roomNumber)
-        );
-    }
-
-    // =====================================================
-    // VIEW TASKS
-    // =====================================================
-
+    // VIEW HOUSEKEEPING TASKS
     private void displayAllTasks() {
-
         System.out.println(
                 controller.getAllTasks()
         );
     }
 
-    // =====================================================
-    // SEARCH
-    // =====================================================
-
+    // SEARCH HOUSEKEEPING TASK
     private void searchTask() {
 
-        System.out.print(
-                "Enter Task ID: "
-        );
+        System.out.print("Enter Task ID: ");
 
-        String taskId
-                = scanner.nextLine();
+        String taskId = InputHelper.readNonBlankLine(scanner, "Enter Task ID: ");
 
-        HousekeepingTask task
-                = controller.searchTaskById(taskId);
+        HousekeepingTask task = controller.searchTaskById(taskId);
 
         if (task == null) {
 
-            System.out.println(
-                    "Task not found."
-            );
+            System.out.println("Task not found.");
 
             return;
         }
 
         System.out.println();
 
-        System.out.println(
-                "Task found:"
-        );
+        System.out.println("Task found:");
 
-        System.out.println(
-                "Task ID : "
-                + task.getTaskId()
-        );
+        System.out.println("Task ID : " + task.getTaskId());
 
-        System.out.println(
-                "Room    : "
-                + task.getRoomNumber()
-        );
+        System.out.println("Room    : " + task.getRoomNumber());
 
-        System.out.println(
-                "Floor   : "
-                + task.getFloor()
-        );
+        System.out.println("Floor   : " + task.getFloor());
 
-        System.out.println(
-                "Staff   : "
-                + task.getStaffId()
-        );
+        System.out.println("Staff   : " + task.getStaffId());
 
-        System.out.println(
-                "Status  : "
-                + task.getStatus()
-        );
+        System.out.println("Status  : " + task.getStatus());
 
-        System.out.println(
-                "Date    : "
-                + task.getTaskDate()
-        );
+        System.out.println("Date    : " + task.getTaskDate());
     }
 
-    // =====================================================
     // UPDATE STATUS
-    // =====================================================
-
     private void updateStatus() {
         System.out.println("\n--- UPDATE CLEANING STATUS ---");
         System.out.println("1. Assign Cleaning Task");
@@ -296,20 +191,19 @@ public class HousekeepingUI {
             case 2:
                 processCleaningAction(HousekeepingStatus.CLEANING_IN_PROGRESS,
                         HousekeepingStatus.INSPECTED,
-                        "CONFIRM CLEANING COMPLETION");
+                        "CONFIRM CLEANING TASK COMPLETION");
                 break;
             case 3:
                 processCleaningAction(HousekeepingStatus.INSPECTED,
                         HousekeepingStatus.READY_FOR_CHECK_IN,
-                        "INSPECTION DONE");
+                        "CONFIRM INSPECTION COMPLETION");
                 break;
             default:
                 System.out.println("Invalid selection.");
         }
     }
 
-    private void processCleaningAction(HousekeepingStatus currentStatus,
-            HousekeepingStatus nextStatus, String actionTitle) {
+    private void processCleaningAction(HousekeepingStatus currentStatus, HousekeepingStatus nextStatus, String actionTitle) {
         HousekeepingTask[] tasks = controller.getTasksByStatus(currentStatus);
 
         System.out.println("\n--- " + actionTitle + " ---");
@@ -327,8 +221,7 @@ public class HousekeepingUI {
                     task.getStaffId(), task.getStatus());
         }
 
-        System.out.print("Enter room number to update: ");
-        String roomNumber = scanner.nextLine().trim();
+        String roomNumber = InputHelper.readNonBlankLine(scanner, "Enter Room Number to update: ");
         HousekeepingTask selectedTask = controller.searchTaskByRoom(roomNumber);
 
         if (selectedTask == null || selectedTask.getStatus() != currentStatus) {
@@ -339,85 +232,47 @@ public class HousekeepingUI {
         System.out.println(controller.updateTaskStatus(selectedTask.getTaskId(), nextStatus));
     }
 
-    // =====================================================
-    // UNDO
-    // =====================================================
-
+    // UNDO LATEST STATUS UPDATE
     private void undoLatestUpdate() {
 
-        String result
-                = controller
-                        .undoLatestStatusChange();
+        String result = controller.undoLatestStatusChange();
 
         System.out.println(result);
     }
 
-    // =====================================================
     // VIEW STACK TOP
-    // =====================================================
-
     private void viewLatestUpdate() {
-
-        StatusChange change
-                = controller
-                        .getLatestStatusChange();
+        StatusChange change = controller.getLatestStatusChange();
 
         if (change == null) {
-
-            System.out.println(
-                    "No status update history."
-            );
+            System.out.println("No status update history.");
 
             return;
         }
 
         System.out.println();
 
-        System.out.println(
-                "Latest Status Update"
-        );
+        System.out.println("Latest Status Update");
 
-        System.out.println(
-                "Task ID: "
-                + change.getTaskId()
-        );
+        System.out.println("Task ID: " + change.getTaskId());
 
-        System.out.println(
-                "Previous Status: "
-                + change.getPreviousStatus()
-        );
+        System.out.println("Previous Status: " + change.getPreviousStatus());
 
-        System.out.println(
-                "New Status: "
-                + change.getNewStatus()
-        );
+        System.out.println("New Status: " + change.getNewStatus());
 
-        System.out.println(
-                "Update Time: "
-                + change.getUpdateTime()
-        );
+        System.out.println("Update Time: " + change.getUpdateTime());
     }
 
-    // =====================================================
-    // REPORT 1
-    // =====================================================
-
+    // ROOM STATUS REPORT 
     private void generateRoomStatusReport() {
 
         System.out.println();
 
-        System.out.println(
-                "ROOM STATUS REPORT FILTER"
-        );
+        System.out.println("ROOM STATUS REPORT FILTER");
 
-        System.out.print(
-                "Enter Floor (0 = All): "
-        );
+        System.out.print("Enter Floor (0 = All): ");
 
-        int floor
-                = scanner.nextInt();
-
-        scanner.nextLine();
+        int floor = InputHelper.readIntInRange(scanner, "Enter Floor (0 = All): ", 0, 3);
 
         System.out.println();
 
@@ -449,64 +304,72 @@ public class HousekeepingUI {
                 "Enter Status: "
         );
 
-        int statusChoice
-                = scanner.nextInt();
+        int statusChoice = InputHelper.readIntInRange(scanner, "Enter Status: ", 0, 4);
 
-        scanner.nextLine();
-
-        HousekeepingStatus status
-                = null;
+        HousekeepingStatus status = null;
 
         switch (statusChoice) {
 
             case 1:
-                status
-                        = HousekeepingStatus.DIRTY;
+                status = HousekeepingStatus.DIRTY;
                 break;
 
             case 2:
-                status
-                        = HousekeepingStatus.CLEANING_IN_PROGRESS;
+                status = HousekeepingStatus.CLEANING_IN_PROGRESS;
                 break;
 
             case 3:
-                status
-                        = HousekeepingStatus.INSPECTED;
+                status = HousekeepingStatus.INSPECTED;
                 break;
 
             case 4:
-                status
-                        = HousekeepingStatus.READY_FOR_CHECK_IN;
+                status = HousekeepingStatus.READY_FOR_CHECK_IN;
                 break;
         }
 
-        String report
-                = controller
-                        .generateRoomStatusReport(
-                                floor,
-                                status,
-                                null
-                        );
+        String report = controller.generateRoomStatusReport(floor, status, null);
 
         System.out.println(report);
     }
 
-    // =====================================================
-    // REPORT 2
-    // =====================================================
-
+    // STAFF PERFORMANCE REPORT
     private void generateStaffPerformanceReport() {
 
-        /*
-         * null means all dates.
-         * You can later allow the user to enter a date.
-         */
+        System.out.println("\nSTAFF PERFORMANCE REPORT FILTER");
+        System.out.println("0. All Room Types");
+        System.out.println("1. Deluxe");
+        System.out.println("2. Suite");
+        System.out.println("3. Penthouse");
+        System.out.print("Enter Room Type: ");
 
-        String report
-                = controller
-                        .generateStaffPerformanceReport(
-                                null
-                        );
+        if (!scanner.hasNextInt()) {
+            System.out.println("Invalid selection.");
+            scanner.nextLine();
+            return;
+        }
+
+        int roomTypeChoice = InputHelper.readIntInRange(scanner, "Enter Room Type: ", 0, 3);
+
+        String roomTypeFilter;
+        switch (roomTypeChoice) {
+            case 0:
+                roomTypeFilter = null;
+                break;
+            case 1:
+                roomTypeFilter = "Deluxe";
+                break;
+            case 2:
+                roomTypeFilter = "Suite";
+                break;
+            case 3:
+                roomTypeFilter = "Penthouse";
+                break;
+            default:
+                System.out.println("Invalid selection.");
+                return;
+        }
+
+        String report = controller.generateStaffPerformanceReport(null, roomTypeFilter);
 
         System.out.println(report);
     }

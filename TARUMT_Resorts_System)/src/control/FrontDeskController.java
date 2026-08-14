@@ -2,6 +2,7 @@
 package control;
 
 import adt.CustomHashMap;
+import adt.CustomList;
 import adt.MapInterface;
 import Dao.GuestDAO;
 import Dao.RoomDAO;
@@ -76,8 +77,7 @@ public class FrontDeskController {
     // (Filters by min bill, Sorts by Bill DESC)
     // ==========================================
     public GuestProfile[] getHighOutstandingBillsReport(double minBill, String roomType) {
-        // HIGHLIGHT YELLOW IN REPORT
-        GuestProfile[] allGuests = guestMap.values(new GuestProfile[guestMap.size()]);
+        GuestProfile[] allGuests = getReportGuestProfiles();
 
         // 1. Count matching profiles for array sizing
         int count = 0;
@@ -111,8 +111,7 @@ public class FrontDeskController {
     // (Filters by Room Type, Checked-In Status and Minimum Bill, Sorts by Name ASC)
     // ==========================================
     public GuestProfile[] getGuestsByRoomTypeReport(String roomType, double minBill) {
-        // HIGHLIGHT YELLOW IN REPORT
-        GuestProfile[] allGuests = guestMap.values(new GuestProfile[guestMap.size()]);
+        GuestProfile[] allGuests = getReportGuestProfiles();
 
         // 1. Count matching room profiles
         int count = 0;
@@ -139,6 +138,57 @@ public class FrontDeskController {
         sortByNameAscending(filtered);
 
         return filtered;
+    }
+
+    // ==========================================
+    // COMBINE SAVED GUESTS WITH ASSIGNED WALK-INS
+    // ==========================================
+    private GuestProfile[] getReportGuestProfiles() {
+        GuestProfile[] savedGuests =
+                guestMap.values(new GuestProfile[guestMap.size()]);
+
+        if (bookingController == null) {
+            return savedGuests;
+        }
+
+        CustomList<Booking> bookings = bookingController.getBookingHistory();
+        int assignedWalkInCount = 0;
+
+        for (int i = 0; i < bookings.size(); i++) {
+            Booking booking = bookings.get(i);
+            if (booking.getBookingStatus().equalsIgnoreCase("ASSIGNED")
+                    && !guestMap.containsKey(booking.getConfirmationNumber())) {
+                assignedWalkInCount++;
+            }
+        }
+
+        GuestProfile[] reportGuests =
+                new GuestProfile[savedGuests.length + assignedWalkInCount];
+        int index = 0;
+
+        for (GuestProfile guest : savedGuests) {
+            if (guest != null) {
+                reportGuests[index++] = guest;
+            }
+        }
+
+        for (int i = 0; i < bookings.size(); i++) {
+            Booking booking = bookings.get(i);
+            if (booking.getBookingStatus().equalsIgnoreCase("ASSIGNED")
+                    && !guestMap.containsKey(booking.getConfirmationNumber())) {
+                reportGuests[index++] = new GuestProfile(
+                        booking.getConfirmationNumber(),
+                        booking.getGuestDisplayName(),
+                        booking.getRoomId(),
+                        booking.getRoomType(),
+                        booking.getGuestIc() == null ? "-" : booking.getGuestIc(),
+                        "Checked-In",
+                        booking.getTotalBilling()
+                );
+            }
+        }
+
+        return reportGuests;
     }
 
     // ==========================================

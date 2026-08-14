@@ -70,18 +70,14 @@ public class RegisterBookingUI {
                     break;
 
                 case 5:
-                    logoutGuest();
-                    break;
-
-                case 6:
                     viewWaitingTimeReport();
                     break;
 
-                case 7:
+                case 6:
                     viewQueuePriorityReport();
                     break;
 
-                case 8:
+                case 7:
                     logout();
                     break;
 
@@ -129,19 +125,15 @@ public class RegisterBookingUI {
         );
 
         System.out.println(
-                "5. Guest Logout"
+                "5. Guest Waiting Time Report"
         );
 
         System.out.println(
-                "6. Guest Waiting Time Report"
+                "6. Queue Priority Report"
         );
 
         System.out.println(
-                "7. Queue Priority Report"
-        );
-
-        System.out.println(
-                "8. Logout System"
+                "7. Logout System"
         );
 
         System.out.println(
@@ -514,37 +506,6 @@ public class RegisterBookingUI {
                 System.out.println(room);
             }
         }
-    }
-
-    // =====================================================
-    // GUEST LOGOUT
-    // =====================================================
-
-    private void logoutGuest() {
-
-        System.out.println(
-                "\n===== GUEST LOGOUT ====="
-        );
-
-        System.out.print(
-                "Enter Room ID (Enter -1 to exit): "
-        );
-
-        String roomId =
-                scanner.nextLine();
-
-        if (roomId.equals("-1")) {
-
-            System.out.println(
-                    "Logout cancelled."
-            );
-
-            return;
-        }
-
-        controller.logoutGuest(
-                roomId
-        );
     }
 
     // =====================================================

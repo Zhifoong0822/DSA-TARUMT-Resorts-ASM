@@ -298,6 +298,7 @@ public class FrontDeskUI {
                 booking.getRoomId() == null ? "Not assigned" : booking.getRoomId());
         System.out.printf("| Booking Status      : %-25s |%n", booking.getBookingStatus());
         System.out.printf("| Number of Nights    : %-25d |%n", booking.getNumberOfNights());
+        System.out.printf("| Current Bill        : RM %-22.2f |%n", booking.getTotalBilling());
         System.out.println("+------------------------------------------------+");
     }
 

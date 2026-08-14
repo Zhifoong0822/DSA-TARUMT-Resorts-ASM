@@ -18,6 +18,7 @@ public class Booking {
 
     private String roomType;
     private int numberOfNights;
+    private double totalBilling;
 
     private String roomId;
     private String bookingStatus;
@@ -44,6 +45,7 @@ public class Booking {
 
         this.roomType = roomType;
         this.numberOfNights = numberOfNights;
+        this.totalBilling = calculateTotalBilling(roomType, numberOfNights);
 
         this.registrationTime =
                 LocalDateTime.now();
@@ -73,6 +75,7 @@ public class Booking {
 
         this.roomType = roomType;
         this.numberOfNights = numberOfNights;
+        this.totalBilling = calculateTotalBilling(roomType, numberOfNights);
 
         this.registrationTime =
                 LocalDateTime.now();
@@ -114,6 +117,10 @@ public class Booking {
 
     public int getNumberOfNights() {
         return numberOfNights;
+    }
+
+    public double getTotalBilling() {
+        return totalBilling;
     }
 
     public String getRoomId() {
@@ -221,6 +228,18 @@ public class Booking {
         return roomAssignmentTime.format(
                 formatter
         );
+    }
+
+    private double calculateTotalBilling(String roomType, int numberOfNights) {
+        double roomPrice = 300.00;
+
+        if (roomType.equalsIgnoreCase("Suite")) {
+            roomPrice = 800.00;
+        } else if (roomType.equalsIgnoreCase("Penthouse")) {
+            roomPrice = 1200.00;
+        }
+
+        return roomPrice * numberOfNights;
     }
 
     // =====================================================

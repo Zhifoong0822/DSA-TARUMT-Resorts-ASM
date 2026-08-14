@@ -187,8 +187,8 @@ public void enqueueByPriority(T item) {
         System.out.printf(
                 "%-12s %-15s %-12s %-12s%n",
                 booking.getWaitingNumber(),
-                booking.getMember().getMemberName(),
-                booking.getMember().getMembershipType(),
+                booking.getGuestDisplayName(),
+                booking.getMembershipType(),
                 booking.getRoomType()
         );
     }
