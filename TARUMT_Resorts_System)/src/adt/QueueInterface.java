@@ -23,4 +23,7 @@ public interface QueueInterface<T> {
     int size();
 
     void display();
+    
+    T get(int index);
+    
 }

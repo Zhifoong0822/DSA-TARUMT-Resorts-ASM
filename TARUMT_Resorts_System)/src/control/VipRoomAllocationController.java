@@ -54,6 +54,39 @@ public class VipRoomAllocationController {
         return waitingRequests.removeTop();
     }
 
+    public LoyaltyRoomRequest peekNextRequestWithAvailableRoom() {
+        LoyaltyRoomRequest[] requests = waitingRequests.toArray(
+                new LoyaltyRoomRequest[waitingRequests.getNumberOfEntries()]);
+
+        for (LoyaltyRoomRequest request : requests) {
+            if (findAvailableRoom(request.getRoomType(), request.getTierRank()) != null) {
+                return request;
+            }
+        }
+        return null;
+    }
+
+    /** Removes the highest-priority request for this room type. */
+    public LoyaltyRoomRequest removeNextRequestForRoomType(String roomType) {
+        LoyaltyRoomRequest[] skipped = new LoyaltyRoomRequest[waitingRequests.getNumberOfEntries()];
+        int skippedCount = 0;
+        LoyaltyRoomRequest selected = null;
+
+        while (!waitingRequests.isEmpty()) {
+            LoyaltyRoomRequest request = waitingRequests.removeTop();
+            if (selected == null && request.getRoomType().equalsIgnoreCase(roomType)) {
+                selected = request;
+                break;
+            }
+            skipped[skippedCount++] = request;
+        }
+
+        for (int i = 0; i < skippedCount; i++) {
+            waitingRequests.add(skipped[i]);
+        }
+        return selected;
+    }
+
     public void saveAllocatedRequest(LoyaltyRoomRequest request, String roomNumber) {
         if (request == null) {
             return;

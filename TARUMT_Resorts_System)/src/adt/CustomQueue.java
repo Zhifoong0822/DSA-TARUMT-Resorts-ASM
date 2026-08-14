@@ -141,6 +141,38 @@ public void enqueueByPriority(T item) {
         return size;
     }
 
+    /**
+     * Removes the item at the supplied queue position without changing the
+     * order of the remaining items.
+     */
+    @SuppressWarnings("unchecked")
+    public T remove(int index) {
+
+        if (index < 0 || index >= size) {
+            return null;
+        }
+
+        int removedPosition = (front + index) % queue.length;
+        T item = (T) queue[removedPosition];
+
+        for (int i = index; i < size - 1; i++) {
+            int current = (front + i) % queue.length;
+            int next = (front + i + 1) % queue.length;
+            queue[current] = queue[next];
+        }
+
+        queue[rear] = null;
+        rear = (rear - 1 + queue.length) % queue.length;
+        size--;
+
+        if (size == 0) {
+            front = 0;
+            rear = -1;
+        }
+
+        return item;
+    }
+
     private void resize() {
 
         Object[] newQueue = new Object[queue.length * 2];
@@ -215,4 +247,19 @@ public void enqueueByPriority(T item) {
 
         return 3;
     }
+    
+    @Override
+    public T get(int index) {
+
+    if (index < 0 || index >= size) {
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    T item = (T) queue[(front + index) % queue.length];
+
+    return item;
+    }
+    
+    
 }

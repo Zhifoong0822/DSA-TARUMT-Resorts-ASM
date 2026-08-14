@@ -33,7 +33,7 @@ public class TARUMTResortsSystem {
                 new VipRoomAllocationUI(vipController, registerController, scanner);
         FrontDeskUI frontDeskUI = new FrontDeskUI(housekeepingController, roomMap, scanner,
                 registerController);
-        RegisterBookingUI registerBookingUI = new RegisterBookingUI(registerController, roomMap, scanner);
+        RegisterBookingUI registerBookingUI = new RegisterBookingUI(registerController, roomMap, scanner,vipRoomAllocationUI);
         int choice = -1;
 
         do {

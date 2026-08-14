@@ -288,12 +288,33 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
    public void callNextGuest(String selectedRoomId) {
 
-    if (vipController != null && vipController.hasWaitingRequests()) {
+    Room room = roomMap.get(selectedRoomId);
+
+    if (room == null) {
+        System.out.println("\nRoom ID not found.");
+        return;
+    }
+
+    if (!room.isAvailable()) {
+        System.out.println("\nRoom " + selectedRoomId + " is not available.");
+        System.out.println("Current status: " + room.getStatus());
+        return;
+    }
+
+    LoyaltyRoomRequest loyaltyRequest = getNextAvailableLoyaltyRequest();
+    if (loyaltyRequest != null) {
+        if (!room.getRoomType().equalsIgnoreCase(loyaltyRequest.getRoomType())) {
+            System.out.println("\nInvalid room selection.");
+            System.out.println("Member requested : " + loyaltyRequest.getRoomType());
+            System.out.println("Selected room    : " + room.getRoomType());
+            return;
+        }
         callNextLoyaltyMember(selectedRoomId);
         return;
     }
 
-    if (bookingQueue.isEmpty()) {
+    Booking booking = peekNextEligibleBooking();
+    if (booking == null) {
 
         System.out.println(
                 "\nThere are no guests waiting."
@@ -301,10 +322,6 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
         return;
     }
-
-    // Look at first guest
-    Booking booking =
-            bookingQueue.peek();
 
     System.out.println(
             "\n===== CALL NEXT GUEST ====="
@@ -349,17 +366,6 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     // FIND SELECTED ROOM
     // =====================================================
 
-    Room room = roomMap.get(selectedRoomId);
-
-    if (room == null) {
-
-        System.out.println(
-                "\nRoom ID not found."
-        );
-
-        return;
-    }
-
     // =====================================================
     // CHECK ROOM TYPE
     // =====================================================
@@ -390,31 +396,11 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     // CHECK ROOM STATUS
     // =====================================================
 
-    if (!room.getStatus()
-            .equalsIgnoreCase(
-                    "Ready For Check-In"
-            )) {
-
-        System.out.println(
-                "\nRoom "
-                        + selectedRoomId
-                        + " is not available."
-        );
-
-        System.out.println(
-                "Current status: "
-                        + room.getStatus()
-        );
-
-        return;
-    }
-
     // =====================================================
     // REMOVE FROM QUEUE
     // =====================================================
 
-    booking =
-            bookingQueue.dequeue();
+    booking = removeFirstBookingForRoomType(room.getRoomType());
 
     // =====================================================
     // ASSIGN ROOM
@@ -512,7 +498,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
 private void callNextLoyaltyMember(String selectedRoomId) {
 
-    LoyaltyRoomRequest request = vipController.peekNextRequest();
+    LoyaltyRoomRequest request = getNextAvailableLoyaltyRequest();
 
     if (request == null) {
         System.out.println(
@@ -565,7 +551,7 @@ private void callNextLoyaltyMember(String selectedRoomId) {
         return;
     }
 
-    request = vipController.removeNextRequest();
+    request = vipController.removeNextRequestForRoomType(room.getRoomType());
     vipController.saveAllocatedRequest(request, room.getRoomNumber());
 
     room.setStatus(
@@ -700,8 +686,18 @@ private void callNextLoyaltyMember(String selectedRoomId) {
 
     public Booking peekNextBooking() {
 
-        if (vipController != null && vipController.hasWaitingRequests()) {
-            LoyaltyRoomRequest request = vipController.peekNextRequest();
+        return peekNextEligibleBooking();
+    }
+
+    /**
+     * Finds the highest-priority waiting guest that can be assigned a room
+     * now. Guests waiting for an unavailable room type remain in the queue
+     * and do not prevent later eligible guests from being called.
+     */
+    public Booking peekNextEligibleBooking() {
+
+        LoyaltyRoomRequest request = getNextAvailableLoyaltyRequest();
+        if (request != null) {
 
             return new Booking(
                     request.getRequestId(),
@@ -715,7 +711,31 @@ private void callNextLoyaltyMember(String selectedRoomId) {
             );
         }
 
-        return bookingQueue.peek();
+        for (int i = 0; i < bookingQueue.size(); i++) {
+            Booking booking = bookingQueue.get(i);
+            if (getAvailableRooms(booking.getRoomType()).length > 0) {
+                return booking;
+            }
+        }
+
+        return null;
+    }
+
+    private LoyaltyRoomRequest getNextAvailableLoyaltyRequest() {
+        if (vipController == null || !vipController.hasWaitingRequests()) {
+            return null;
+        }
+        return vipController.peekNextRequestWithAvailableRoom();
+    }
+
+    private Booking removeFirstBookingForRoomType(String roomType) {
+        for (int i = 0; i < bookingQueue.size(); i++) {
+            Booking booking = bookingQueue.get(i);
+            if (booking.getRoomType().equalsIgnoreCase(roomType)) {
+                return bookingQueue.remove(i);
+            }
+        }
+        return null;
     }
 
     // =====================================================

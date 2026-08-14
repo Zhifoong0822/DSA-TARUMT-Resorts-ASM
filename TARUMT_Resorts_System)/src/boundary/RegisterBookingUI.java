@@ -2,10 +2,12 @@ package boundary;
 
 import control.RegisterInterfaceController;
 import Dao.MemberDao;
+import Dao.RoomDAO;
 import entity.Member;
 import entity.Booking;
 import entity.Room;
 import adt.MapInterface;
+import control.VipRoomAllocationController;
 import java.util.Scanner;
 
 public class RegisterBookingUI {
@@ -13,11 +15,11 @@ public class RegisterBookingUI {
     private Scanner scanner;
 
     private RegisterInterfaceController controller;
-
-    private MapInterface<String, Room> roomMap;
-
+    private VipRoomAllocationUI vipRoomAllocationUI;
+   
     private boolean loggedIn = true;
-
+    MapInterface<String, Room> roomMap = new RoomDAO().loadRooms();
+    VipRoomAllocationController vipController = new VipRoomAllocationController(roomMap);
     // =====================================================
     // CONSTRUCTOR
     // =====================================================
@@ -25,14 +27,15 @@ public class RegisterBookingUI {
     public RegisterBookingUI(
             RegisterInterfaceController controller,
             MapInterface<String, Room> roomMap,
-            Scanner scanner) {
+            Scanner scanner,
+            VipRoomAllocationUI vipRoomAllocationUI) {
 
         this.controller = controller;
 
         this.roomMap = roomMap;
 
         this.scanner = scanner;
-
+        this.vipRoomAllocationUI = vipRoomAllocationUI;
     }
 
     // =====================================================
@@ -208,12 +211,16 @@ public class RegisterBookingUI {
             );
 
             System.out.println(
-                    "\nLOYALTY MEMBER REQUEST"
-            );
+            "\nThis IC belongs to a registered member."
+              );
 
             System.out.println(
-                    "Member will be added into loyalty priority tree."
+                "Opening VIP & Loyalty Tier Priority Room Allocation..."
             );
+
+            vipRoomAllocationUI.startMenu();
+
+            return;
         }
 
         // -----------------------------------------------
@@ -344,7 +351,7 @@ public class RegisterBookingUI {
     // =====================================================
 
     Booking booking =
-            controller.peekNextBooking();
+            controller.peekNextEligibleBooking();
 
     if (booking == null) {
 
@@ -396,16 +403,7 @@ public class RegisterBookingUI {
 
     if (availableRooms.length == 0) {
 
-        System.out.println(
-                "\nNo available "
-                        + booking.getRoomType()
-                        + " rooms."
-        );
-
-        System.out.println(
-                booking.getWaitingNumber()
-                        + " remains in the queue."
-        );
+        System.out.println("\nNo assignable rooms are currently available.");
 
         return;
     }
@@ -559,31 +557,5 @@ public class RegisterBookingUI {
         }
     }
 
-    // =====================================================
-    // MAIN
-    // =====================================================
-
-    public static void main(
-            String[] args) {
-
-        MemberDao memberDAO =
-                new MemberDao();
-
-        MapInterface<String, Room> roomMap = new Dao.RoomDAO().loadRooms();
-
-        RegisterInterfaceController controller =
-                new RegisterInterfaceController(
-                        memberDAO,
-                        roomMap
-                );
-
-        RegisterBookingUI ui =
-                new RegisterBookingUI(
-                        controller,
-                        roomMap,
-                        new Scanner(System.in)
-                );
-
-        ui.start();
-    }
+    
 }
