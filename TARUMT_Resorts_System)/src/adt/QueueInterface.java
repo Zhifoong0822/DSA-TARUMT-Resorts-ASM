@@ -12,8 +12,6 @@ public interface QueueInterface<T> {
 
     void enqueue(T item);
 
-    void enqueueFront(T item);
-
     void enqueueByPriority(T item);
 
     T dequeue();

@@ -4,8 +4,7 @@ import Dao.MemberDao;
 import entity.Member;
 import entity.Booking;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import adt.CustomList;
 import adt.CustomQueue;
 import adt.CustomHashMap;
 import adt.MapInterface;
@@ -20,7 +19,7 @@ public class RegisterInterfaceController {
 
     private CustomQueue<Booking> bookingQueue;
 
-    private List<Booking> bookingHistory;
+    private CustomList<Booking> bookingHistory;
     private MapInterface<String, Booking> bookingConfirmationMap;
 
     private int bookingCounter = 1;
@@ -48,7 +47,7 @@ public class RegisterInterfaceController {
                 new CustomQueue<>();
 
         bookingHistory =
-                new ArrayList<>();
+                new CustomList<>();
 
         bookingConfirmationMap = new CustomHashMap<>();
     }
@@ -475,8 +474,9 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         // SEARCH BOOKING HISTORY
         // =================================================
 
-        for (Booking b : bookingHistory) {
-
+        for (int i =0;i<bookingHistory.size();i++) {
+            Booking b= bookingHistory.get(i);
+            
             if (roomId.equalsIgnoreCase(
                     b.getRoomId())
                     && b.getBookingStatus()
@@ -602,7 +602,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     // BOOKING HISTORY
     // =====================================================
 
-    public List<Booking> getBookingHistory() {
+    public CustomList<Booking> getBookingHistory() {
 
         return bookingHistory;
     }
@@ -614,9 +614,9 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     public Booking findBookingById(
             String bookingId) {
 
-        for (Booking booking :
-                bookingHistory) {
-
+        for (int i =0; i< bookingHistory.size();i++) {
+            Booking booking=bookingHistory.get(i);
+            
             if (booking.getBookingId()
                     .equalsIgnoreCase(
                             bookingId
@@ -634,7 +634,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     }
     
     public void generateWaitingTimeReport(
-            List<Booking> bookings) {
+            CustomList<Booking> bookings) {
 
         if (bookings == null || bookings.isEmpty()) {
 
@@ -683,7 +683,8 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         long shortestSeconds = Long.MAX_VALUE;
         long longestSeconds = Long.MIN_VALUE;
 
-        for (Booking booking : bookings) {
+        for (int i =0; i< bookingHistory.size();i++) {
+            Booking booking=bookingHistory.get(i);
 
             LocalDateTime registerTime =
                     booking.getRegistrationTime();
@@ -854,7 +855,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     // =========================================================
 
     public void generateQueuePriorityReport(
-            List<Booking> bookings) {
+            CustomList<Booking> bookings) {
 
         if (bookings == null || bookings.isEmpty()) {
 
@@ -867,8 +868,8 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
         // Create a copy so the original bookingHistory
         // is not changed.
-        List<Booking> registrationOrder =
-                new ArrayList<>(bookings);
+        CustomList<Booking> registrationOrder;
+        registrationOrder = new CustomList<>();
 
         // Sort according to registration time
         sortByRegistrationTime(
@@ -876,10 +877,11 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         );
 
         // Create another list for assignment order
-        List<Booking> assignmentOrder =
-                new ArrayList<>();
+        CustomList<Booking> assignmentOrder =
+                new CustomList<>();
 
-        for (Booking booking : bookings) {
+       for (int i =0; i< bookings.size();i++) {
+            Booking booking=bookings.get(i);
 
             if (booking.getRoomAssignmentTime()
                     != null) {
@@ -919,8 +921,9 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
                 "----------------------------------------------------------------------"
         );
 
-        for (Booking booking : registrationOrder) {
-
+       for (int i =0; i< registrationOrder.size();i++) {
+            Booking booking=registrationOrder.get(i);
+            
             int registerOrder =
                     getRegistrationOrder(
                             registrationOrder,
@@ -959,7 +962,8 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         int normalCount = 0;
         int vipServedFirst = 0;
 
-        for (Booking booking : bookings) {
+        for (int i =0; i< bookings.size();i++) {
+            Booking booking=bookings.get(i);
 
             if (booking.getMember()
                     .getMembershipType()
@@ -987,9 +991,9 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
                                     booking
                             );
 
-                    for (Booking other
-                            : registrationOrder) {
-
+                    for (int j=0;j<registrationOrder.size();j++) {
+                        Booking other = registrationOrder.get(j);
+                        
                         int otherRegistrationOrder =
                                 getRegistrationOrder(
                                         registrationOrder,
@@ -1113,7 +1117,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     // =========================================================
 
     private void sortByRegistrationTime(
-            List<Booking> bookings) {
+            CustomList<Booking> bookings) {
 
         for (int i = 1;
                 i < bookings.size();
@@ -1149,7 +1153,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
 
     private void sortByAssignmentTime(
-            List<Booking> bookings) {
+            CustomList<Booking> bookings) {
 
         for (int i = 1;
                 i < bookings.size();
@@ -1189,7 +1193,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     // =========================================================
 
     private int getRegistrationOrder(
-            List<Booking> bookings,
+            CustomList<Booking> bookings,
             Booking target) {
 
         for (int i = 0;
@@ -1211,7 +1215,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
 
     private int getAssignmentOrder(
-            List<Booking> bookings,
+            CustomList<Booking> bookings,
             Booking target) {
 
         for (int i = 0;
@@ -1233,13 +1237,14 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
 
     private int getNormalServedFirst(
-            List<Booking> registrationOrder,
-            List<Booking> assignmentOrder) {
+            CustomList<Booking> registrationOrder,
+            CustomList<Booking> assignmentOrder) {
 
         int count = 0;
 
-        for (Booking normal : registrationOrder) {
-
+        for (int i=0;i< registrationOrder.size();i++) {
+            Booking normal = registrationOrder.get(i);
+            
             if (!normal.getMember()
                     .getMembershipType()
                     .equalsIgnoreCase("NORMAL")) {
@@ -1265,7 +1270,8 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
 
             boolean servedBeforeVip = true;
 
-            for (Booking vip : registrationOrder) {
+            for (int j =0; j< registrationOrder.size();j++) {
+            Booking vip= registrationOrder.get(i);
 
                 if (!vip.getMember()
                         .getMembershipType()
@@ -1303,11 +1309,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         return count;
     }
 
-
-    // =========================================================
     // FORMAT WAITING TIME
-    // =========================================================
-
     private String formatDuration(
             long totalSeconds) {
 
@@ -1323,4 +1325,5 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
                 seconds
         );
     }
+    
 }

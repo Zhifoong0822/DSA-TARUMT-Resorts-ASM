@@ -198,21 +198,6 @@ public void enqueueByPriority(T item) {
     );
 }
     
-    @Override
-    public void enqueueFront(T item) {
-
-        if (size == queue.length) {
-            resize();
-        }
-
-        for (int i = size; i > 0; i--) {
-            queue[i] = queue[i - 1];
-        }
-
-        queue[0] = item;
-
-        size++;
-    }
     private int getPriority(
         Booking booking) {
 
