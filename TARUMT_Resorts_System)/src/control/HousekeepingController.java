@@ -341,13 +341,14 @@ public class HousekeepingController {
                 == HousekeepingStatus.CLEANING_IN_PROGRESS) {
 
             return next
-                    == HousekeepingStatus.INSPECTED;
+                    == HousekeepingStatus.INSPECTING;
         }
 
-        if (current == HousekeepingStatus.INSPECTED) {
+        if (current == HousekeepingStatus.INSPECTING) {
 
             return next
-                    == HousekeepingStatus.READY_FOR_CHECK_IN;
+                    == HousekeepingStatus.READY_FOR_CHECK_IN
+                    || next == HousekeepingStatus.DIRTY;
         }
 
         return false;

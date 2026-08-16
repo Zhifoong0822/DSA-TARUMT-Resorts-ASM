@@ -40,7 +40,9 @@ public class HousekeepingUI {
     }
 
     public void run() {
+        boolean running = true;
 
+        while (running) {
             displayMenu();
 
             int choice = InputHelper.readIntInRange(scanner, "Enter your choice: ", 0, 7);
@@ -79,6 +81,7 @@ public class HousekeepingUI {
                     System.out.println(
                             "Returning to main menu..."
                     );
+                    running = false;
                     break;
 
                 default:
@@ -86,6 +89,7 @@ public class HousekeepingUI {
                             "Invalid selection."
                     );
             }
+        }
     }
 
     private void displayMenu() {
@@ -170,7 +174,7 @@ public class HousekeepingUI {
         System.out.println("\n--- UPDATE CLEANING STATUS ---");
         System.out.println("1. Assign Cleaning Task");
         System.out.println("2. Confirm Cleaning Completion");
-        System.out.println("3. Inspection Done");
+        System.out.println("3. Assign Inspection");
         System.out.print("Enter choice: ");
 
         String input = scanner.nextLine().trim();
@@ -190,13 +194,11 @@ public class HousekeepingUI {
                 break;
             case 2:
                 processCleaningAction(HousekeepingStatus.CLEANING_IN_PROGRESS,
-                        HousekeepingStatus.INSPECTED,
+                        HousekeepingStatus.INSPECTING,
                         "CONFIRM CLEANING TASK COMPLETION");
                 break;
             case 3:
-                processCleaningAction(HousekeepingStatus.INSPECTED,
-                        HousekeepingStatus.READY_FOR_CHECK_IN,
-                        "CONFIRM INSPECTION COMPLETION");
+                completeInspection();
                 break;
             default:
                 System.out.println("Invalid selection.");
@@ -230,6 +232,53 @@ public class HousekeepingUI {
         }
 
         System.out.println(controller.updateTaskStatus(selectedTask.getTaskId(), nextStatus));
+    }
+
+    private void completeInspection() {
+        HousekeepingTask[] tasks = controller.getTasksByStatus(HousekeepingStatus.INSPECTING);
+
+        System.out.println("\n--- CONFIRM INSPECTION COMPLETION ---");
+        if (tasks.length == 0) {
+            System.out.println("No rooms are currently " + HousekeepingStatus.INSPECTING + ".");
+            return;
+        }
+
+        System.out.printf("%-10s %-10s %-8s %-10s %-25s%n",
+                "Task ID", "Room", "Floor", "Staff", "Status");
+        System.out.println("-----------------------------------------------------------------------");
+        for (HousekeepingTask task : tasks) {
+            System.out.printf("%-10s %-10s %-8d %-10s %-25s%n",
+                    task.getTaskId(), task.getRoomNumber(), task.getFloor(),
+                    task.getStaffId(), task.getStatus());
+        }
+
+        String roomNumber = InputHelper.readNonBlankLine(scanner, "Enter Room Number to inspect: ");
+        HousekeepingTask selectedTask = controller.searchTaskByRoom(roomNumber);
+
+        if (selectedTask == null || selectedTask.getStatus() != HousekeepingStatus.INSPECTING) {
+            System.out.println("Invalid room. Select a room from the displayed list.");
+            return;
+        }
+
+        HousekeepingStatus nextStatus = readInspectionResult();
+        System.out.println(controller.updateTaskStatus(selectedTask.getTaskId(), nextStatus));
+    }
+
+    private HousekeepingStatus readInspectionResult() {
+        while (true) {
+            String result = InputHelper.readNonBlankLine(scanner,
+                    "Is the room clean after inspection? (yes/no): ").toLowerCase();
+
+            if ("yes".equals(result) || "y".equals(result)) {
+                return HousekeepingStatus.READY_FOR_CHECK_IN;
+            }
+
+            if ("no".equals(result) || "n".equals(result)) {
+                return HousekeepingStatus.DIRTY;
+            }
+
+            System.out.println("Please enter yes or no.");
+        }
     }
 
     // UNDO LATEST STATUS UPDATE
@@ -293,7 +342,7 @@ public class HousekeepingUI {
         );
 
         System.out.println(
-                "3. Inspected"
+                "3. Inspecting"
         );
 
         System.out.println(
@@ -319,7 +368,7 @@ public class HousekeepingUI {
                 break;
 
             case 3:
-                status = HousekeepingStatus.INSPECTED;
+                status = HousekeepingStatus.INSPECTING;
                 break;
 
             case 4:

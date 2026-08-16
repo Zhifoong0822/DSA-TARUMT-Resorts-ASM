@@ -13,7 +13,7 @@ public enum HousekeepingStatus {
     OCCUPIED("Occupied"),
     DIRTY("Dirty"),
     CLEANING_IN_PROGRESS("Cleaning In Progress"),
-    INSPECTED("Inspected"),
+    INSPECTING("Inspecting"),
     READY_FOR_CHECK_IN("Ready for Check-In");
 
     private final String displayName;
