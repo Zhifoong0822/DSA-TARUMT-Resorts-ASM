@@ -20,9 +20,6 @@ public class RegisterBookingUI {
     private boolean loggedIn = true;
     MapInterface<String, Room> roomMap = new RoomDAO().loadRooms();
     VipRoomAllocationController vipController = new VipRoomAllocationController(roomMap);
-    // =====================================================
-    // CONSTRUCTOR
-    // =====================================================
 
     public RegisterBookingUI(
             RegisterInterfaceController controller,
@@ -38,10 +35,6 @@ public class RegisterBookingUI {
         this.vipRoomAllocationUI = vipRoomAllocationUI;
     }
 
-    // =====================================================
-    // START
-    // =====================================================
-
     public void start() {
         loggedIn = true;
 
@@ -49,10 +42,7 @@ public class RegisterBookingUI {
 
             displayMenu();
 
-            int choice =
-                    getIntegerInput(
-                            "Enter your choice: "
-                    );
+            int choice =getIntegerInput("Enter your choice: ");
 
             switch (choice) {
 
@@ -93,75 +83,30 @@ public class RegisterBookingUI {
         }
     }
 
-    // =====================================================
-    // MENU
-    // =====================================================
-
     private void displayMenu() {
 
-        System.out.println(
-                "\n================================"
-        );
-
-        System.out.println(
-                "       HOTEL BOOKING SYSTEM"
-        );
-
-        System.out.println(
-                "================================"
-        );
-
-        System.out.println(
-                "1. Register Booking"
-        );
-
-        System.out.println(
-                "2. Call Next Guest"
-        );
-
-        System.out.println(
-                "3. View Waiting Queue"
-        );
-
-        System.out.println(
-                "4. View Rooms"
-        );
-
-        System.out.println(
-                "5. Guest Waiting Time Report"
-        );
-
-        System.out.println(
-                "6. Queue Priority Report"
-        );
-
-        System.out.println(
-                "7. return to main menu"
-        );
-
-        System.out.println(
-                "================================"
-        );
+        System.out.println("\n================================");
+        System.out.println("       HOTEL BOOKING SYSTEM");
+        System.out.println("================================");
+        System.out.println("1. Register Booking");
+        System.out.println("2. Call Next Guest");
+        System.out.println("3. View Waiting Queue");
+        System.out.println("4. View Rooms");
+        System.out.println("5. Guest Waiting Time Report");
+        System.out.println("6. Queue Priority Report");
+        System.out.println("7. return to main menu");
+        System.out.println("================================");
     }
 
 
     private void registerBooking() {
-
-        System.out.println(
-                "\n===== REGISTER WALK-IN ====="
-        );
-
-        System.out.print(
-                "Enter IC Number (Enter -1 to exit): "
-        );
-
-        String icNumber =
-                scanner.nextLine();
+        System.out.println("\n===== REGISTER WALK-IN =====");
+        System.out.print("Enter IC Number (Enter -1 to exit): ");
+        
+        String icNumber =scanner.nextLine();
 
         if (icNumber.equals("-1")) {
-            System.out.println(
-                    "Registration cancelled."
-            );
+            System.out.println("Registration cancelled.");
             return;
         }
 
@@ -170,60 +115,35 @@ public class RegisterBookingUI {
 
     public void registerBookingWithCheckedIc(String icNumber) {
 
-        Member member =
-                controller.findMemberByIC(
-                        icNumber
-                );
+        Member member =controller.findMemberByIC(icNumber);
 
         if (member != null && isLoyaltyTier(member.getMembershipType())) {
 
-            System.out.println(
-                    "\nThis IC belongs to a loyalty member."
-            );
-
-            System.out.println(
-                    "Redirecting to VIP & Loyalty Tier Priority Room Allocation..."
-            );
-
+            System.out.println("\nThis IC belongs to a loyalty member.");
+            System.out.println("Redirecting to VIP & Loyalty Tier Priority Room Allocation...");
             if (vipRoomAllocationUI != null) {
                 vipRoomAllocationUI.addRequestFromCheckedMember(member);
             }
             return;
         }
 
-        System.out.println(
-                "\n===== GUEST REQUEST ====="
-        );
+        System.out.println("\n===== GUEST REQUEST =====");
+        System.out.println("IC Number is not registered as VIP/member.");
+        System.out.print("Enter Guest Name (Enter -1 to exit): ");
 
-        System.out.println(
-                "IC Number is not registered as VIP/member."
-        );
-
-        System.out.print(
-                "Enter Guest Name (Enter -1 to exit): "
-        );
-
-        String guestName =
-                scanner.nextLine();
+        String guestName = scanner.nextLine();
 
         if (guestName.equals("-1")) {
-            System.out.println(
-                    "Registration cancelled."
-            );
+            System.out.println("Registration cancelled.");
             return;
         }
 
-        System.out.print(
-                "\nEnter Room Type ((Penthouse/Deluxe/Suite)or -1 to exit): "
-        );
+        System.out.print("\nEnter Room Type ((Penthouse/Deluxe/Suite)or -1 to exit): ");
 
-        String roomType =
-                scanner.nextLine();
+        String roomType =scanner.nextLine();
 
         if (roomType.equals("-1")) {
-            System.out.println(
-                    "Registration cancelled."
-            );
+            System.out.println("Registration cancelled.");
             return;
         }
 
@@ -232,188 +152,108 @@ public class RegisterBookingUI {
             return;
         }
 
-        controller.registerBooking(
-                icNumber,
-                roomType,
-                numberOfNights,
-                guestName
-        );
+        controller.registerBooking(icNumber,roomType,numberOfNights,guestName);
     }
 
     private int inputNumberOfNights() {
 
         while (true) {
 
-            System.out.print(
-                    "Enter Number of Nights (Enter -1 to exit): "
-            );
+            System.out.print("Enter Number of Nights (Enter -1 to exit): ");
 
-            String input =
-                    scanner.nextLine();
+            String input = scanner.nextLine();
 
             if (input.equals("-1")) {
-                System.out.println(
-                        "Registration cancelled."
-                );
+                System.out.println("Registration cancelled.");
                 return -1;
             }
 
             try {
-                int numberOfNights =
-                        Integer.parseInt(
-                                input
-                        );
+                int numberOfNights =Integer.parseInt(input);
 
                 if (numberOfNights <= 0) {
-                    System.out.println(
-                            "Number of nights must be greater than 0."
-                    );
+                    System.out.println("Number of nights must be greater than 0.");
                     continue;
                 }
 
                 return numberOfNights;
 
             } catch (NumberFormatException e) {
-                System.out.println(
-                        "Please enter a valid number."
-                );
+                System.out.println("Please enter a valid number.");
             }
         }
     }
 
 
- private void callNextGuest() {
+    private void callNextGuest() {
 
-    System.out.println(
-            "\n===== CALL NEXT GUEST ====="
-    );
+        System.out.println("\n===== CALL NEXT GUEST =====");
 
-    Booking booking =
-            controller.peekNextEligibleBooking();
+        Booking booking =controller.peekNextEligibleBooking();
 
-    if (booking == null) {
+        if (booking == null) {
 
-        System.out.println(
-                "There are no guests waiting."
-        );
+            System.out.println("There are no guests waiting.");
 
-        return;
-    }
+            return;
+        }
 
+        System.out.println("\nGuest Information");
+        System.out.println("Waiting Number : "+ booking.getWaitingNumber());
+        System.out.println("Guest          : "+ booking.getGuestDisplayName());
+        System.out.println("Type           : "+ booking.getMembershipType());
+        System.out.println("Room Type      : "+ booking.getRoomType());
+        System.out.println("Number of Nights : "+ booking.getNumberOfNights());
 
-    System.out.println(
-            "\nGuest Information"
-    );
+        Room[] availableRooms = controller.getAvailableRooms(booking.getRoomType());
 
-    System.out.println(
-            "Waiting Number : "
-                    + booking.getWaitingNumber()
-    );
+        if (availableRooms.length == 0) {
 
-    System.out.println(
-            "Guest          : "
-                    + booking.getGuestDisplayName()
-    );
+            System.out.println("\nNo assignable rooms are currently available.");
 
-    System.out.println(
-            "Type           : "
-                    + booking.getMembershipType()
-    );
+            return;
+        }
 
-    System.out.println(
-            "Room Type      : "
-                    + booking.getRoomType()
-    );
-
-    System.out.println(
-            "Number of Nights : "
-                    + booking.getNumberOfNights()
-    );
-
-
-    Room[] availableRooms = controller.getAvailableRooms(booking.getRoomType());
-
-    if (availableRooms.length == 0) {
-
-        System.out.println("\nNo assignable rooms are currently available.");
-
-        return;
-    }
-
-    // =====================================================
-    // DISPLAY AVAILABLE ROOMS
-    // =====================================================
-
-    System.out.println(
-            "\n===== AVAILABLE ROOMS ====="
-    );
-
-    System.out.printf(
-            "%-10s %-15s %-25s%n",
+        System.out.println("\n===== AVAILABLE ROOMS =====");
+        System.out.printf("%-10s %-15s %-25s%n",
             "Room ID",
             "Room Type",
             "Status"
-    );
+        );
+        System.out.println("------------------------------------------------");
 
-    System.out.println(
-            "------------------------------------------------"
-    );
-
-    for (Room room : availableRooms) {
-
-        System.out.printf(
-                "%-10s %-15s %-25s%n",
+        for (Room room : availableRooms) {
+            
+            System.out.printf("%-10s %-15s %-25s%n",
                 room.getRoomNumber(),
                 room.getRoomType(),
                 room.getStatus()
-        );
-    }
+            );
+        }
 
-    System.out.println(
-            "------------------------------------------------"
-    );
+        System.out.println("------------------------------------------------");
 
-    // =====================================================
-    // ADMIN SELECT ROOM
-    // =====================================================
+        System.out.print("Enter Room ID to assign (Enter -1 to cancel): ");
 
-    System.out.print(
-            "Enter Room ID to assign (Enter -1 to cancel): "
-    );
-
-    String roomId =
+        String roomId =
             scanner.nextLine();
 
     if (roomId.equals("-1")) {
 
-        System.out.println(
-                "Room assignment cancelled."
-        );
+        System.out.println("Room assignment cancelled.");
 
         return;
     }
-
-    // =====================================================
-    // SEND SELECTED ROOM TO CONTROLLER
-    // =====================================================
 
     controller.callNextGuest(
             roomId
     );
 }
 
-    // =====================================================
-    // VIEW QUEUE
-    // =====================================================
-
     private void viewWaitingQueue() {
 
         controller.displayBookingQueue();
     }
-
-    // =====================================================
-    // VIEW ROOMS
-    // =====================================================
 
     private void viewRooms() {
 
@@ -428,20 +268,12 @@ public class RegisterBookingUI {
         }
     }
 
-    // =====================================================
-    // WAITING TIME REPORT
-    // =====================================================
-
     private void viewWaitingTimeReport() {
 
         controller.generateWaitingTimeReport(
                 controller.getBookingHistory()
         );
     }
-
-    // =====================================================
-    // QUEUE PRIORITY REPORT
-    // =====================================================
 
     private void viewQueuePriorityReport() {
 
@@ -450,22 +282,12 @@ public class RegisterBookingUI {
         );
     }
 
-    // =====================================================
-    // SYSTEM LOGOUT
-    // =====================================================
-
     private void logout() {
 
         loggedIn = false;
 
-        System.out.println(
-                "\nYou have logged out of the system."
-        );
+        System.out.println("\nYou have logged out of the system.");
     }
-
-    // =====================================================
-    // INTEGER INPUT
-    // =====================================================
 
     private int getIntegerInput(
             String message) {
@@ -476,15 +298,11 @@ public class RegisterBookingUI {
 
             try {
 
-                return Integer.parseInt(
-                        scanner.nextLine()
-                );
+                return Integer.parseInt(scanner.nextLine());
 
             } catch (NumberFormatException e) {
 
-                System.out.println(
-                        "Invalid input. Please enter a number."
-                );
+                System.out.println("Invalid input. Please enter a number.");
             }
         }
     }
@@ -495,6 +313,5 @@ public class RegisterBookingUI {
                 || tier.equalsIgnoreCase("Diamond")
                 || tier.equalsIgnoreCase("Elite"));
     }
-
-    
+  
 }

@@ -43,62 +43,45 @@ public class CustomQueue<T> implements QueueInterface<T> {
     }
     
     @Override
-public void enqueueByPriority(T item) {
+    public void enqueueByPriority(T item) {
 
-    if (size == queue.length) {
+        if (size == queue.length) {
 
-        System.out.println("Queue is full.");
-        return;
-    }
-
-    Booking newBooking =
-            (Booking) item;
-
-    int priority =
-            getPriority(newBooking);
-
-    int insertPosition = size;
-
-    // Find where the new booking should be inserted
-    for (int i = 0; i < size; i++) {
-
-        Booking current =
-                (Booking) queue[
-                        (front + i)
-                                % queue.length
-                ];
-
-        int currentPriority =
-                getPriority(current);
-
-        if (priority < currentPriority) {
-
-            insertPosition = i;
-
-            break;
+            System.out.println("Queue is full.");
+            return;
         }
+
+        Booking newBooking =(Booking) item;
+
+        int priority =getPriority(newBooking);
+
+        int insertPosition = size;
+
+        // Find where the new booking should be inserted
+        for (int i = 0; i < size; i++) {
+            
+            Booking current =(Booking) queue[(front + i)% queue.length];
+
+            int currentPriority = getPriority(current);
+
+            if (priority < currentPriority) {
+                
+                insertPosition = i;
+                break;
+            }
+        }
+
+      // Shift elements backward
+        for (int i = size; i > insertPosition; i--) {
+
+            queue[(front + i)% queue.length] =queue[(front + i - 1)% queue.length];
+        }
+
+        queue[(front + insertPosition)% queue.length] = item;
+
+        size++;
     }
-
-    // Shift elements backward
-    for (int i = size; i > insertPosition; i--) {
-
-        queue[
-                (front + i)
-                        % queue.length
-        ] =
-                queue[
-                        (front + i - 1)
-                                % queue.length
-                ];
-    }
-
-    queue[
-            (front + insertPosition)
-                    % queue.length
-    ] = item;
-
-    size++;
-}
+    
     @Override
     @SuppressWarnings("unchecked")
     public T dequeue() {
@@ -106,15 +89,10 @@ public void enqueueByPriority(T item) {
         if (isEmpty()) {
             return null;
         }
-
         T item = (T) queue[front];
-
         queue[front] = null;
-
         front = (front + 1) % queue.length;
-
         size--;
-
         return item;
     }
 
@@ -141,10 +119,6 @@ public void enqueueByPriority(T item) {
         return size;
     }
 
-    /**
-     * Removes the item at the supplied queue position without changing the
-     * order of the remaining items.
-     */
     @SuppressWarnings("unchecked")
     public T remove(int index) {
 
@@ -199,8 +173,7 @@ public void enqueueByPriority(T item) {
 
     System.out.println("\n==============================================================");
 
-    System.out.printf(
-            "%-12s %-15s %-12s %-12s%n",
+    System.out.printf("%-12s %-15s %-12s %-12s%n",
             "Waiting ID",
             "Name",
             "Member",
@@ -213,8 +186,7 @@ public void enqueueByPriority(T item) {
 
     for (int i = 0; i < size; i++) {
 
-        Booking booking =
-                (Booking) queue[(front + i) % queue.length];
+        Booking booking =(Booking) queue[(front + i) % queue.length];
 
         System.out.printf(
                 "%-12s %-15s %-12s %-12s%n",
@@ -233,14 +205,12 @@ public void enqueueByPriority(T item) {
     private int getPriority(
         Booking booking) {
 
-    if (booking.getMembershipType()
-            .equalsIgnoreCase("VIP")) {
+    if (booking.getMembershipType().equalsIgnoreCase("VIP")) {
 
         return 1;
     }
 
-    if (booking.getMembershipType()
-            .equalsIgnoreCase("NORMAL")) {
+    if (booking.getMembershipType().equalsIgnoreCase("NORMAL")) {
         
             return 2;
         }
