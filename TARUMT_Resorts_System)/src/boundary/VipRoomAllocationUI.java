@@ -4,7 +4,9 @@ package boundary;
 import control.RegisterInterfaceController;
 import control.VipRoomAllocationController;
 import adt.MapInterface;
+import entity.Booking;
 import entity.LoyaltyRoomRequest;
+import entity.Member;
 import entity.Room;
 import java.util.Scanner;
 
@@ -12,6 +14,7 @@ public class VipRoomAllocationUI {
 
     private VipRoomAllocationController controller;
     private RegisterInterfaceController registerController;
+    private RegisterBookingUI registerBookingUI;
     private Scanner scanner;
 
     public VipRoomAllocationUI() {
@@ -35,16 +38,21 @@ public class VipRoomAllocationUI {
         this.scanner = scanner;
     }
 
+    public void setRegisterBookingUI(RegisterBookingUI registerBookingUI) {
+        this.registerBookingUI = registerBookingUI;
+    }
+
     public void startMenu() {
         int choice;
         do {
             System.out.println(" \nVIP & LOYALTY TIER PRIORITY ROOM ALLOCATION");
             System.out.println("-----------------------------------------------");
             System.out.println("1. Add room request");
-            System.out.println("2. Search request by ID");
-            System.out.println("3. Report: Waiting priority list");
-            System.out.println("4. Report: Allocation summary");
-            System.out.println("5. View room status");
+            System.out.println("2. Call Next Guest");
+            System.out.println("3. Search request by ID");
+            System.out.println("4. Report: Waiting priority list");
+            System.out.println("5. Report: Allocation summary");
+            System.out.println("6. View room status");
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
             choice = readInt();
@@ -54,15 +62,18 @@ public class VipRoomAllocationUI {
                     addRequest();
                     break;
                 case 2:
-                    searchRequest();
+                    callNextGuest();
                     break;
                 case 3:
-                    waitingPriorityReport();
+                    searchRequest();
                     break;
                 case 4:
-                    allocationSummaryReport();
+                    waitingPriorityReport();
                     break;
                 case 5:
+                    allocationSummaryReport();
+                    break;
+                case 6:
                     displayRooms();
                     break;
                 case 0:
@@ -78,12 +89,27 @@ public class VipRoomAllocationUI {
         System.out.println("\n--- ADD ROOM REQUEST ---");
 
         System.out.print("Enter IC/Passport: ");
-        scanner.nextLine().trim();
+        String icNumber = scanner.nextLine().trim();
 
-        System.out.print("Guest name: ");
-        String guestName = scanner.nextLine().trim();
+        Member member = registerController.findMemberByIC(icNumber);
 
-        String loyaltyTier = readLoyaltyTier();
+        if (member == null || !isLoyaltyTier(member.getMembershipType())) {
+            System.out.println("This IC is not a VIP/member.");
+            System.out.println("Redirecting to Walk-In Registration...");
+
+            if (registerBookingUI != null) {
+                registerBookingUI.registerBookingWithCheckedIc(icNumber);
+            }
+            return;
+        }
+
+        addRequestFromCheckedMember(member);
+    }
+
+    public void addRequestFromCheckedMember(Member member) {
+        System.out.println("\n--- ADD LOYALTY ROOM REQUEST ---");
+        System.out.println("Name : " + member.getMemberName());
+        System.out.println("Tier : " + member.getMembershipType());
 
         System.out.print("Room type (Deluxe/Suite/Penthouse): ");
         String roomType = scanner.nextLine().trim();
@@ -91,27 +117,63 @@ public class VipRoomAllocationUI {
         int stayNights = readInt();
 
         double spending = controller.calculateEstimatedSpending(roomType, stayNights);
-        LoyaltyRoomRequest request = controller.addRequest(guestName, loyaltyTier, roomType, stayNights, spending);
+        LoyaltyRoomRequest request = controller.addRequest(member.getMemberName(),
+                member.getMembershipType(), roomType, stayNights, spending);
 
         System.out.println("Request added to priority binary search tree.");
         System.out.println("Auto Request ID: " + request.getRequestId());
     }
 
-    private void allocateNext() {
-        LoyaltyRoomRequest request = controller.allocateNextRoom();
-        if (request == null) {
-            System.out.println("\nNo suitable room can be allocated now.");
-        } else {
-            System.out.println("\nAllocated successfully:");
-            printRequestHeader();
-            printRequestRow(request);
-            printLine();
+    private void callNextGuest() {
+        if (registerController == null) {
+            System.out.println("Booking controller is not ready.");
+            return;
         }
-    }
 
-    private void allocateAll() {
-        int count = controller.allocateAllPossibleRooms();
-        System.out.println("\nTotal rooms allocated: " + count);
+        System.out.println("\n===== CALL NEXT GUEST =====");
+
+        Booking booking = registerController.peekNextEligibleBooking();
+
+        if (booking == null) {
+            System.out.println("There are no guests waiting.");
+            return;
+        }
+
+        System.out.println("\nGuest Information");
+        System.out.println("Waiting Number : " + booking.getWaitingNumber());
+        System.out.println("Guest          : " + booking.getGuestDisplayName());
+        System.out.println("Type           : " + booking.getMembershipType());
+        System.out.println("Room Type      : " + booking.getRoomType());
+        System.out.println("Number of Nights : " + booking.getNumberOfNights());
+
+        Room[] availableRooms = registerController.getAvailableRooms(booking.getRoomType());
+
+        if (availableRooms.length == 0) {
+            System.out.println("\nNo assignable rooms are currently available.");
+            return;
+        }
+
+        System.out.println("\n===== AVAILABLE ROOMS =====");
+        System.out.printf("%-10s %-15s %-25s%n", "Room ID", "Room Type", "Status");
+        System.out.println("------------------------------------------------");
+
+        for (int i = 0; i < availableRooms.length; i++) {
+            System.out.printf("%-10s %-15s %-25s%n",
+                    availableRooms[i].getRoomNumber(),
+                    availableRooms[i].getRoomType(),
+                    availableRooms[i].getStatus());
+        }
+
+        System.out.println("------------------------------------------------");
+        System.out.print("Enter Room ID to assign (Enter -1 to cancel): ");
+        String roomId = scanner.nextLine();
+
+        if (roomId.equals("-1")) {
+            System.out.println("Room assignment cancelled.");
+            return;
+        }
+
+        registerController.callNextGuest(roomId);
     }
 
     private void searchRequest() {
@@ -226,25 +288,11 @@ public class VipRoomAllocationUI {
         }
     }
 
-    private String readLoyaltyTier() {
-        while (true) {
-            System.out.print("Loyalty tier (Elite/Diamond/Platinum): ");
-            String type = scanner.nextLine().trim();
-
-            if (type.equalsIgnoreCase("Elite")) {
-                return "Elite";
-            }
-
-            if (type.equalsIgnoreCase("Diamond")) {
-                return "Diamond";
-            }
-
-            if (type.equalsIgnoreCase("Platinum")) {
-                return "Platinum";
-            }
-
-            System.out.println("Please enter Elite, Diamond or Platinum.");
-        }
+    private boolean isLoyaltyTier(String tier) {
+        return tier != null
+                && (tier.equalsIgnoreCase("Platinum")
+                || tier.equalsIgnoreCase("Diamond")
+                || tier.equalsIgnoreCase("Elite"));
     }
 
     public static void main(String[] args) {
