@@ -132,18 +132,18 @@ public class FrontDeskUI {
             return;
         }
 
-        Booking booking = controller.findWalkInBookingByConfirmation(confirmationNumber);
-        if (booking != null) {
-            System.out.println("\n[BOOKING MATCH FOUND]");
-            printBookingDetails(booking);
-            return;
-        }
-
         GuestProfile guest = controller.findGuestByConfirmation(confirmationNumber);
 
         if (guest != null) {
             System.out.println("\n[MATCH FOUND]");
             printGuestDetails(guest);
+            return;
+        }
+
+        Booking booking = controller.findWalkInBookingByConfirmation(confirmationNumber);
+        if (booking != null) {
+            System.out.println("\n[BOOKING MATCH FOUND]");
+            printBookingDetails(booking);
         } else {
             System.out.println("\n[NOT FOUND] No record associated with confirmation number: "
                     + confirmationNumber);

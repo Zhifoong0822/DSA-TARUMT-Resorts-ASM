@@ -1,7 +1,6 @@
 // Author: [Chew Zhi Foong]
 package control;
 
-import adt.CustomHashMap;
 import adt.CustomList;
 import adt.MapInterface;
 import Dao.GuestDAO;
@@ -12,7 +11,6 @@ import entity.Booking;
 
 public class FrontDeskController {
 
-    // HIGHLIGHT YELLOW IN REPORT
     private MapInterface<String, GuestProfile> guestMap;
     private GuestDAO guestDAO;
     private MapInterface<String, Room> roomMap;
@@ -39,7 +37,11 @@ public class FrontDeskController {
     }
 
     public GuestProfile findGuestByConfirmation(String confirmationNum) {
-        return guestMap.get(confirmationNum);
+        GuestProfile savedGuest = guestMap.get(confirmationNum);
+        if (savedGuest != null || bookingController == null) {
+            return savedGuest;
+        }
+        return bookingController.findGuestProfileByConfirmation(confirmationNum);
     }
 
     public Booking findWalkInBookingByConfirmation(String confirmationNumber) {

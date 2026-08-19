@@ -216,16 +216,34 @@ public class VipRoomAllocationController {
         return total;
     }
 
-    public double calculateEstimatedSpending(String roomType, int stayNights) {
-        double price = 300;
-
-        if (roomType.equalsIgnoreCase("Suite")) {
-            price = 800;
-        } else if (roomType.equalsIgnoreCase("Penthouse")) {
-            price = 1200;
+    /** Returns the nightly rate for the selected room type. */
+    public double getNightlyRate(String roomType) {
+        if (roomType == null) {
+            return 0;
         }
+        if (roomType.equalsIgnoreCase("Deluxe")) {
+            return 300;
+        }
+        if (roomType.equalsIgnoreCase("Suite")) {
+            return 800;
+        }
+        if (roomType.equalsIgnoreCase("Penthouse")) {
+            return 1200;
+        }
+        return 0;
+    }
 
-        return price * stayNights;
+    /** Calculates the final room bill before the loyalty request is queued. */
+    public double calculateBill(String roomType, int stayNights) {
+        if (stayNights <= 0) {
+            return 0;
+        }
+        return getNightlyRate(roomType) * stayNights;
+    }
+
+    // Kept for existing callers that still use the previous method name.
+    public double calculateEstimatedSpending(String roomType, int stayNights) {
+        return calculateBill(roomType, stayNights);
     }
 
     private Room findAvailableRoom(String roomType, int tierRank) {

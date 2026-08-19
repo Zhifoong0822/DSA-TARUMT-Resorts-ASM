@@ -88,6 +88,11 @@ public class VipRoomAllocationUI {
     private void addRequest() {
         System.out.println("\n--- ADD ROOM REQUEST ---");
 
+        if (registerController == null) {
+            System.out.println("Booking integration is not ready. Open VIP allocation from the main system.");
+            return;
+        }
+
         System.out.print("Enter IC/Passport: ");
         String icNumber = scanner.nextLine().trim();
 
@@ -116,12 +121,33 @@ public class VipRoomAllocationUI {
         System.out.print("Stay nights: ");
         int stayNights = readInt();
 
-        double spending = controller.calculateEstimatedSpending(roomType, stayNights);
-        LoyaltyRoomRequest request = controller.addRequest(member.getMemberName(),
-                member.getMembershipType(), roomType, stayNights, spending);
+        double nightlyRate = controller.getNightlyRate(roomType);
+        if (nightlyRate == 0) {
+            System.out.println("[Error] Room type must be Deluxe, Suite, or Penthouse.");
+            return;
+        }
+        if (stayNights <= 0) {
+            System.out.println("[Error] Stay nights must be at least 1.");
+            return;
+        }
+
+        double spending = controller.calculateBill(roomType, stayNights);
+        LoyaltyRoomRequest request = registerController.registerLoyaltyBooking(member, roomType,
+                stayNights);
+        if (request == null) {
+            System.out.println("[Error] Unable to create the VIP booking.");
+            return;
+        }
 
         System.out.println("Request added to priority binary search tree.");
         System.out.println("Auto Request ID: " + request.getRequestId());
+        Booking booking = registerController.findBookingForLoyaltyRequest(request.getRequestId());
+        if (booking != null) {
+            System.out.println("Confirmation No.: " + booking.getConfirmationNumber());
+        }
+        System.out.printf("Room rate      : RM %.2f per night%n", nightlyRate);
+        System.out.printf("Total bill     : RM %.2f (%d night%s)%n", spending, stayNights,
+                stayNights == 1 ? "" : "s");
     }
 
     private void callNextGuest() {
@@ -145,6 +171,7 @@ public class VipRoomAllocationUI {
         System.out.println("Type           : " + booking.getMembershipType());
         System.out.println("Room Type      : " + booking.getRoomType());
         System.out.println("Number of Nights : " + booking.getNumberOfNights());
+        System.out.printf("Total Bill       : RM %.2f%n", booking.getTotalBilling());
 
         Room[] availableRooms = registerController.getAvailableRooms(booking.getRoomType());
 

@@ -11,6 +11,7 @@ import adt.MapInterface;
 import java.time.Duration;
 import entity.LoyaltyRoomRequest;
 import entity.Room;
+import entity.GuestProfile;
 
 public class RegisterInterfaceController {
 
@@ -23,6 +24,8 @@ public class RegisterInterfaceController {
 
     private CustomList<Booking> bookingHistory;
     private MapInterface<String, Booking> bookingConfirmationMap;
+    private MapInterface<String, Booking> loyaltyBookingByRequestId;
+    private MapInterface<String, GuestProfile> checkedInGuestProfiles;
 
     private int bookingCounter = 1;
 
@@ -61,6 +64,8 @@ public class RegisterInterfaceController {
                 new CustomList<>();
 
         bookingConfirmationMap = new CustomHashMap<>();
+        loyaltyBookingByRequestId = new CustomHashMap<>();
+        checkedInGuestProfiles = new CustomHashMap<>();
     }
 
     public Room[] getAvailableRooms(String roomType) {
@@ -169,13 +174,7 @@ if (member != null) {
 }
 
 if (member != null && isLoyaltyTier(member.getMembershipType()) && vipController != null) {
-    LoyaltyRoomRequest request = vipController.addRequest(
-            member.getMemberName(),
-            member.getMembershipType(),
-            roomType,
-            numberOfNights,
-            booking.getTotalBilling()
-    );
+    LoyaltyRoomRequest request = saveLoyaltyBooking(booking);
 
     System.out.println(
             "\n===== LOYALTY REQUEST SUCCESSFUL ====="
@@ -184,6 +183,11 @@ if (member != null && isLoyaltyTier(member.getMembershipType()) && vipController
     System.out.println(
             "Request ID       : "
                     + request.getRequestId()
+    );
+
+    System.out.println(
+            "Confirmation No. : "
+                    + booking.getConfirmationNumber()
     );
 
     System.out.println(
@@ -280,6 +284,41 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
         System.out.println(
                 "\nPlease wait for your number to be called."
         );
+    }
+
+    /**
+     * Registers a loyalty member through the VIP module and keeps a real
+     * confirmation-number record for later Front Desk searching.
+     */
+    public LoyaltyRoomRequest registerLoyaltyBooking(Member member, String roomType,
+            int numberOfNights) {
+        if (member == null || vipController == null) {
+            return null;
+        }
+
+        String bookingId = String.format("B%03d", bookingCounter);
+        String confirmationNumber = String.format("%08d", bookingCounter);
+        String waitingNumber = String.format("W%03d", bookingCounter);
+        bookingCounter++;
+
+        Booking booking = new Booking(bookingId, confirmationNumber, waitingNumber, member,
+                roomType, numberOfNights);
+        return saveLoyaltyBooking(booking);
+    }
+
+    private LoyaltyRoomRequest saveLoyaltyBooking(Booking booking) {
+        LoyaltyRoomRequest request = vipController.addRequest(
+                booking.getGuestDisplayName(), booking.getMembershipType(), booking.getRoomType(),
+                booking.getNumberOfNights(), booking.getTotalBilling());
+
+        bookingHistory.add(booking);
+        bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
+        loyaltyBookingByRequestId.put(request.getRequestId(), booking);
+        return request;
+    }
+
+    public Booking findBookingForLoyaltyRequest(String requestId) {
+        return loyaltyBookingByRequestId.get(requestId);
     }
 
     // =====================================================
@@ -417,6 +456,7 @@ bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
     booking.setBookingStatus(
             "ASSIGNED"
     );
+    createCheckedInGuestProfile(booking);
 
     // =====================================================
     // UPDATE ROOM STATUS
@@ -553,6 +593,14 @@ private void callNextLoyaltyMember(String selectedRoomId) {
 
     request = vipController.removeNextRequestForRoomType(room.getRoomType());
     vipController.saveAllocatedRequest(request, room.getRoomNumber());
+
+    Booking booking = loyaltyBookingByRequestId.get(request.getRequestId());
+    if (booking != null) {
+        booking.setRoomId(room.getRoomNumber());
+        booking.setRoomAssignmentTime(LocalDateTime.now());
+        booking.setBookingStatus("ASSIGNED");
+        createCheckedInGuestProfile(booking);
+    }
 
     room.setStatus(
             "Occupied"
@@ -754,6 +802,18 @@ private void callNextLoyaltyMember(String selectedRoomId) {
     public CustomList<Booking> getBookingHistory() {
 
         return bookingHistory;
+    }
+
+    /** Returns a checked-in record, including a VIP guest after allocation. */
+    public GuestProfile findGuestProfileByConfirmation(String confirmationNumber) {
+        return checkedInGuestProfiles.get(confirmationNumber);
+    }
+
+    private void createCheckedInGuestProfile(Booking booking) {
+        checkedInGuestProfiles.put(booking.getConfirmationNumber(), new GuestProfile(
+                booking.getConfirmationNumber(), booking.getGuestDisplayName(), booking.getRoomId(),
+                booking.getRoomType(), booking.getGuestIc() == null ? "-" : booking.getGuestIc(),
+                "Checked-In", booking.getTotalBilling()));
     }
 
     // =====================================================
