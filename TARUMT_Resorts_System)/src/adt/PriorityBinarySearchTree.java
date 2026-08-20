@@ -1,4 +1,4 @@
-// Author: Yong Shen
+// Author: TanYong Shen
 package adt;
 
 public class PriorityBinarySearchTree<T extends Comparable<T>> implements PriorityBinarySearchTreeInterface<T> {

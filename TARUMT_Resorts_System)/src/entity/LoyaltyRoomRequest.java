@@ -1,4 +1,4 @@
-// Author: Yong Shen
+// Author: Tan Yong Shen
 package entity;
 
 public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
