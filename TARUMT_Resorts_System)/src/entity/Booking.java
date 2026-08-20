@@ -27,9 +27,6 @@ public class Booking {
     private LocalDateTime registrationTime;
     private LocalDateTime roomAssignmentTime;
 
-    // =====================================================
-    // CONSTRUCTOR FOR MEMBER
-    // =====================================================
 
     public Booking(
             String bookingId,
@@ -53,10 +50,6 @@ public class Booking {
 
         this.bookingStatus = "WAITING";
     }
-
-    // =====================================================
-    // CONSTRUCTOR FOR GUEST
-    // =====================================================
 
     public Booking(
             String bookingId,
@@ -113,10 +106,6 @@ public class Booking {
         this.bookingStatus = "WAITING";
     }
 
-    // =====================================================
-    // GETTERS
-    // =====================================================
-
     public String getBookingId() {
         return bookingId;
     }
@@ -169,9 +158,6 @@ public class Booking {
         return roomAssignmentTime;
     }
 
-    // =====================================================
-    // SETTERS
-    // =====================================================
 
     public void setRoomId(String roomId) {
         this.roomId = roomId;
@@ -190,10 +176,6 @@ public class Booking {
                 roomAssignmentTime;
     }
 
-    // =====================================================
-    // GET DISPLAY NAME
-    // =====================================================
-
     public String getGuestDisplayName() {
 
         if (member != null) {
@@ -204,9 +186,6 @@ public class Booking {
         return guestName;
     }
 
-    // =====================================================
-    // GET MEMBER TYPE
-    // =====================================================
 
     public String getMembershipType() {
 
@@ -221,10 +200,6 @@ public class Booking {
 
         return "GUEST";
     }
-
-    // =====================================================
-    // FORMATTED REGISTRATION TIME
-    // =====================================================
 
     public String getFormattedRegistrationTime() {
 
@@ -243,10 +218,6 @@ public class Booking {
         );
     }
 
-    // =====================================================
-    // FORMATTED ROOM ASSIGNMENT TIME
-    // =====================================================
-
     public String getFormattedRoomAssignmentTime() {
 
         if (roomAssignmentTime == null) {
@@ -254,10 +225,7 @@ public class Booking {
             return "-";
         }
 
-        DateTimeFormatter formatter =
-                DateTimeFormatter.ofPattern(
-                        "yyyy-MM-dd HH:mm:ss"
-                );
+        DateTimeFormatter formatter =DateTimeFormatter.ofPattern( "yyyy-MM-dd HH:mm:ss");
 
         return roomAssignmentTime.format(
                 formatter
@@ -275,10 +243,6 @@ public class Booking {
 
         return roomPrice * numberOfNights;
     }
-
-    // =====================================================
-    // DISPLAY BOOKING
-    // =====================================================
 
     @Override
     public String toString() {
