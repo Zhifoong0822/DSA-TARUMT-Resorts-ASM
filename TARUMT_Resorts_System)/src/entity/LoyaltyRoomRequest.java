@@ -1,6 +1,9 @@
 // Author: Tan Yong Shen
 package entity;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
 
     private String requestId;
@@ -11,6 +14,8 @@ public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
     private double totalSpending;
     private int bookingOrder;
     private String allocatedRoomNo;
+    private LocalDateTime registrationTime;
+    private LocalDateTime roomAssignmentTime;
 
     public LoyaltyRoomRequest() {
     }
@@ -25,6 +30,7 @@ public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
         this.totalSpending = totalSpending;
         this.bookingOrder = bookingOrder;
         this.allocatedRoomNo = "-";
+        this.registrationTime = LocalDateTime.now();
     }
 
     public String getRequestId() {
@@ -89,6 +95,36 @@ public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
 
     public void setAllocatedRoomNo(String allocatedRoomNo) {
         this.allocatedRoomNo = allocatedRoomNo;
+    }
+
+    public LocalDateTime getRegistrationTime() {
+        return registrationTime;
+    }
+
+    public void setRegistrationTime(LocalDateTime registrationTime) {
+        this.registrationTime = registrationTime;
+    }
+
+    public String getFormattedRegistrationTime() {
+        if (registrationTime == null) {
+            return "-";
+        }
+        return registrationTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    }
+
+    public LocalDateTime getRoomAssignmentTime() {
+        return roomAssignmentTime;
+    }
+
+    public void setRoomAssignmentTime(LocalDateTime roomAssignmentTime) {
+        this.roomAssignmentTime = roomAssignmentTime;
+    }
+
+    public String getFormattedRoomAssignmentTime() {
+        if (roomAssignmentTime == null) {
+            return "-";
+        }
+        return roomAssignmentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
     public int getTierRank() {

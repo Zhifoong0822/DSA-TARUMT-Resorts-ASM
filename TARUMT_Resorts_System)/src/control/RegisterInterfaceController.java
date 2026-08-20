@@ -409,10 +409,8 @@ public class RegisterInterfaceController {
     
     public void generateWaitingTimeReport(CustomList<Booking> bookings) {
 
-        if (bookings == null || bookings.isEmpty()) {
-
-            System.out.println("\nNo booking records available.");
-            return;
+        if (bookings == null) {
+            bookings = new CustomList<>();
         }
         System.out.println("\n======================================================================");
         System.out.println("                     GUEST WAITING TIME REPORT");
@@ -427,14 +425,16 @@ public class RegisterInterfaceController {
         int vipCount = 0;
         int normalCount = 0;
 
-        Booking shortestBooking = null;
-        Booking longestBooking = null;
+        String shortestGuestName = null;
+        String shortestGuestType = null;
+        String longestGuestName = null;
+        String longestGuestType = null;
 
         long shortestSeconds = Long.MAX_VALUE;
         long longestSeconds = Long.MIN_VALUE;
 
-        for (int i =0; i< bookingHistory.size();i++) {
-            Booking booking=bookingHistory.get(i);
+        for (int i = 0; i < bookings.size(); i++) {
+            Booking booking = bookings.get(i);
             LocalDateTime registerTime =booking.getRegistrationTime();
             LocalDateTime roomTime =booking.getRoomAssignmentTime();
 
@@ -443,13 +443,13 @@ public class RegisterInterfaceController {
             }
 
             long waitingSeconds =Duration.between(registerTime,roomTime).getSeconds();
-            String type =booking.getMember().getMembershipType();
+            String type = booking.getMembershipType();
             String waitTime =formatDuration(waitingSeconds);
             System.out.printf("%-8s %-15s %-10s %-18s %-18s %-12s%n",
-                    booking.getWaitingNumber(),booking.getMember().getMemberName(),type,
+                    booking.getWaitingNumber(), booking.getGuestDisplayName(), type,
                     booking.getFormattedRegistrationTime(),booking.getFormattedRoomAssignmentTime(),waitTime);
 
-            if (type.equalsIgnoreCase("VIP")) {
+            if (isLoyaltyTier(type)) {
                 vipTotalSeconds += waitingSeconds;
                 vipCount++;
             } else {
@@ -460,47 +460,81 @@ public class RegisterInterfaceController {
             if (waitingSeconds < shortestSeconds) {
 
                 shortestSeconds = waitingSeconds;
-                shortestBooking = booking;
+                shortestGuestName = booking.getGuestDisplayName();
+                shortestGuestType = booking.getMembershipType();
             }
 
             if (waitingSeconds > longestSeconds) {
                 longestSeconds = waitingSeconds;
-                longestBooking = booking;
+                longestGuestName = booking.getGuestDisplayName();
+                longestGuestType = booking.getMembershipType();
             }
         }
 
+        LoyaltyRoomRequest[] daoVipRequests = getUnlinkedVipDaoRequests();
+        long daoVipTotalSeconds = 0;
+        int daoVipAllocatedCount = 0;
+        for (int i = 0; i < daoVipRequests.length; i++) {
+            LoyaltyRoomRequest request = daoVipRequests[i];
+            LocalDateTime endTime = request.getRoomAssignmentTime() == null
+                    ? LocalDateTime.now() : request.getRoomAssignmentTime();
+            long waitingSeconds = Duration.between(request.getRegistrationTime(), endTime).getSeconds();
+            if (request.getRoomAssignmentTime() != null) {
+                daoVipTotalSeconds += waitingSeconds;
+                daoVipAllocatedCount++;
+                if (waitingSeconds < shortestSeconds) {
+                    shortestSeconds = waitingSeconds;
+                    shortestGuestName = request.getGuestName();
+                    shortestGuestType = request.getLoyaltyTier();
+                }
+                if (waitingSeconds > longestSeconds) {
+                    longestSeconds = waitingSeconds;
+                    longestGuestName = request.getGuestName();
+                    longestGuestType = request.getLoyaltyTier();
+                }
+            }
+            System.out.printf("%-8s %-15s %-10s %-18s %-18s %-12s%n",
+                    request.getRequestId(), request.getGuestName(), request.getLoyaltyTier(),
+                    request.getFormattedRegistrationTime(), request.getFormattedRoomAssignmentTime(),
+                    formatDuration(waitingSeconds));
+        }
+
         System.out.println("----------------------------------------------------------------------");
-        System.out.println("\nTotal Guests         : "+ (vipCount + normalCount));
-        System.out.println("VIP Guests           : "+ vipCount);
-        System.out.println("Normal Guests        : "+ normalCount);
+        System.out.println("\nTotal Guests         : "+ (vipCount + normalCount + daoVipRequests.length));
+        System.out.println("Loyalty Guests       : "+ (vipCount + daoVipRequests.length));
+        System.out.println("Regular Guests       : "+ normalCount);
+        System.out.println("VIP Requests Waiting : " + getWaitingVipRequestCount(daoVipRequests));
+        System.out.println("VIP Requests Allocated : " + getAllocatedVipRequestCount(daoVipRequests));
 
         // VIP average
-        if (vipCount > 0) {
+        int completedLoyaltyCount = vipCount + daoVipAllocatedCount;
+        long totalLoyaltyWaitSeconds = vipTotalSeconds + daoVipTotalSeconds;
+        if (completedLoyaltyCount > 0) {
 
-            long averageVip =vipTotalSeconds / vipCount;
-            System.out.println("Average VIP Wait     : "+ formatDuration(averageVip));
+            long averageVip = totalLoyaltyWaitSeconds / completedLoyaltyCount;
+            System.out.println("Average Loyalty Wait : "+ formatDuration(averageVip));
 
         } else {
-            System.out.println("Average VIP Wait     : N/A");
+            System.out.println("Average Loyalty Wait : N/A");
         }
         // Normal average
         if (normalCount > 0) {
 
             long averageNormal =normalTotalSeconds / normalCount;
-            System.out.println("Average Normal Wait  : "+ formatDuration(averageNormal));
+            System.out.println("Average Regular Wait : "+ formatDuration(averageNormal));
         } else {
-            System.out.println("Average Normal Wait  : N/A");
+            System.out.println("Average Regular Wait : N/A");
         }
 
-        if (shortestBooking != null) {
+        if (shortestGuestName != null) {
 
-            System.out.println("\nShortest Wait        : "+ shortestBooking.getMember().getMemberName()+ " ("
-                    + shortestBooking.getMember().getMembershipType().toUpperCase()+ ") - "+ formatDuration(shortestSeconds));
+            System.out.println("\nShortest Wait        : " + shortestGuestName + " ("
+                    + shortestGuestType.toUpperCase() + ") - " + formatDuration(shortestSeconds));
         }
 
-        if (longestBooking != null) {
-            System.out.println("Longest Wait         : "+ longestBooking.getMember().getMemberName()+ " ("
-                            + longestBooking.getMember().getMembershipType().toUpperCase()+ ") - "+ formatDuration(longestSeconds));
+        if (longestGuestName != null) {
+            System.out.println("Longest Wait         : " + longestGuestName + " ("
+                            + longestGuestType.toUpperCase() + ") - " + formatDuration(longestSeconds));
         }
         System.out.println("\n======================================================================");
     }
@@ -509,10 +543,8 @@ public class RegisterInterfaceController {
     // =========================================================
     public void generateQueuePriorityReport(CustomList<Booking> bookings) {
 
-        if (bookings == null || bookings.isEmpty()) {
-
-            System.out.println("\nNo booking records available.");
-            return;
+        if (bookings == null) {
+            bookings = new CustomList<>();
         }
 
         CustomList<Booking> registrationOrder;
@@ -535,8 +567,8 @@ public class RegisterInterfaceController {
         System.out.println("\n======================================================================");
         System.out.println("                       QUEUE PRIORITY REPORT");
         System.out.println("======================================================================");
-        System.out.printf("%-10s %-8s %-15s %-10s %-16s %-14s%n",
-                "Booking ID","Wait No","Guest","Type","Register Order","Assign Order");
+        System.out.printf("%-10s %-8s %-15s %-12s %-16s %-16s%n",
+                "Booking ID", "Wait No", "Guest", "Guest Type", "Register Order", "Allocation Order");
         System.out.println("----------------------------------------------------------------------");
 
        for (int i =0; i< registrationOrder.size();i++) {
@@ -548,76 +580,193 @@ public class RegisterInterfaceController {
                     getAssignmentOrder(assignmentOrder,booking);
 
             String assignment =assignOrder == 0 ? "-": String.valueOf(assignOrder);
-            System.out.printf("%-10s %-8s %-15s %-10s %-16d %-14s%n",
-                    booking.getBookingId(),booking.getWaitingNumber(),booking.getGuestDisplayName(),
-                    booking.getMembershipType(),registerOrder,assignment);
+            System.out.printf("%-10s %-8s %-15s %-12s %-16d %-16s%n",
+                    booking.getBookingId(), booking.getWaitingNumber(), booking.getGuestDisplayName(),
+                    booking.getMembershipType(), registerOrder, assignment);
+        }
+
+        LoyaltyRoomRequest[] daoVipRequests = getUnlinkedVipDaoRequests();
+        for (int i = 0; i < daoVipRequests.length; i++) {
+            LoyaltyRoomRequest request = daoVipRequests[i];
+            int allocationOrder = getDaoAllocationOrder(request, assignmentOrder, daoVipRequests);
+            String allocation = allocationOrder == 0 ? "Waiting" : String.valueOf(allocationOrder);
+            System.out.printf("%-10s %-8s %-15s %-12s %-16d %-16s%n",
+                    request.getRequestId(), request.getRequestId(), request.getGuestName(),
+                    request.getLoyaltyTier(), request.getBookingOrder(), allocation);
         }
 
         System.out.println("----------------------------------------------------------------------");
-        int vipCount = 0;
-        int normalCount = 0;
-        int vipServedFirst = 0;
+        int loyaltyCount = 0;
+        int regularCount = 0;
+        int loyaltyServed = 0;
+        int loyaltyPriorityHonoured = 0;
         for (int i =0; i< bookings.size();i++) {
             Booking booking=bookings.get(i);
 
-            if (booking.getMembershipType().equalsIgnoreCase("VIP")) {
+            if (isLoyaltyTier(booking.getMembershipType())) {
 
-                vipCount++;
-                int vipOrder =getAssignmentOrder(assignmentOrder,booking);
+                loyaltyCount++;
+                int loyaltyOrder = getAssignmentOrder(assignmentOrder, booking);
 
-                if (vipOrder > 0) {
+                if (loyaltyOrder > 0) {
+                    loyaltyServed++;
                    
                     boolean priorityReceived =true;
-                    int vipRegistrationOrder =getRegistrationOrder(registrationOrder,booking);
+                    int loyaltyRegistrationOrder = getRegistrationOrder(registrationOrder, booking);
                     
                     for (int j=0;j<registrationOrder.size();j++) {
                         Booking other = registrationOrder.get(j);
                         
                         int otherRegistrationOrder =getRegistrationOrder(registrationOrder,other);
 
-                        if (otherRegistrationOrder< vipRegistrationOrder && other.getMembershipType().equalsIgnoreCase("NORMAL")) {
+                        if (otherRegistrationOrder < loyaltyRegistrationOrder
+                                && !isLoyaltyTier(other.getMembershipType())) {
 
                             int otherAssignmentOrder =getAssignmentOrder(assignmentOrder,other);
 
-                            if (otherAssignmentOrder > 0&& otherAssignmentOrder < vipOrder) {
+                            if (otherAssignmentOrder > 0 && otherAssignmentOrder < loyaltyOrder) {
                                 priorityReceived = false;
                             }
                         }
                     }
 
                     if (priorityReceived) {
-                        vipServedFirst++;
+                        loyaltyPriorityHonoured++;
                     }
                 }
             } else {
-                normalCount++;
+                regularCount++;
             }
         }
-        System.out.println("\nTotal VIP Guests          : "+ vipCount);
-        System.out.println("Total Normal Guests       : "+ normalCount);
-        System.out.println("VIP Guests Served First   : "+ vipServedFirst);
-        System.out.println("Normal Guests Served First: "+ getNormalServedFirst(registrationOrder,assignmentOrder));
+        loyaltyCount += daoVipRequests.length;
+        int daoAllocatedCount = getAllocatedVipRequestCount(daoVipRequests);
+        loyaltyServed += daoAllocatedCount;
+        loyaltyPriorityHonoured += getDaoPriorityHonouredCount(daoVipRequests, bookings);
+        System.out.println("\nTotal Loyalty Guests      : " + loyaltyCount);
+        System.out.println("Total Regular Guests      : " + regularCount);
+        System.out.println("VIP Requests Waiting      : " + getWaitingVipRequestCount(daoVipRequests));
+        System.out.println("VIP Requests Allocated    : " + getAllocatedVipRequestCount(daoVipRequests));
+        System.out.println("Loyalty Guests Assigned   : " + loyaltyServed);
+        System.out.println("Priority Assignments Honoured: " + loyaltyPriorityHonoured);
 
-        if (vipCount > 0) {
-            double priorityRate =(vipServedFirst * 100.0)/ vipCount;
-            System.out.printf("VIP Priority Rate         : %.2f%%%n",priorityRate);
+        if (loyaltyServed > 0) {
+            double priorityRate = (loyaltyPriorityHonoured * 100.0) / loyaltyServed;
+            System.out.printf("Loyalty Priority Rate     : %.2f%%%n", priorityRate);
+        } else {
+            System.out.println("Loyalty Priority Rate     : N/A (no loyalty guest assigned)");
         }
 
-        if (!registrationOrder.isEmpty()) {
-            Booking firstRegistered =registrationOrder.get(0);
-
-            System.out.println("\nFirst Registered           : "+ firstRegistered.getGuestDisplayName()+ " ("
-                            + firstRegistered.getMembershipType().toUpperCase()+ ")");
-        }
-
-        if (!assignmentOrder.isEmpty()) {
-
-            Booking firstAssigned =assignmentOrder.get(0);
-            System.out.println("First Served               : "+ firstAssigned.getGuestDisplayName()+ " ("
-                            + firstAssigned.getMembershipType().toUpperCase()+ ")"
-            );
-        }
         System.out.println("\n======================================================================");
+    }
+
+    /** Returns DAO-loaded VIP requests that do not already have a booking row. */
+    private LoyaltyRoomRequest[] getUnlinkedVipDaoRequests() {
+        if (vipController == null) {
+            return new LoyaltyRoomRequest[0];
+        }
+
+        LoyaltyRoomRequest[] waitingRequests = vipController.getWaitingPriorityReport("All", "Elite");
+        LoyaltyRoomRequest[] allocatedRequests = vipController.getAllocatedRequests();
+        LoyaltyRoomRequest[] requests = new LoyaltyRoomRequest[
+                waitingRequests.length + allocatedRequests.length];
+        int requestIndex = 0;
+        for (int i = 0; i < waitingRequests.length; i++) {
+            requests[requestIndex++] = waitingRequests[i];
+        }
+        for (int i = 0; i < allocatedRequests.length; i++) {
+            requests[requestIndex++] = allocatedRequests[i];
+        }
+        int count = 0;
+        for (int i = 0; i < requests.length; i++) {
+            if (findBookingForLoyaltyRequest(requests[i].getRequestId()) == null) {
+                count++;
+            }
+        }
+
+        LoyaltyRoomRequest[] unlinkedRequests = new LoyaltyRoomRequest[count];
+        int index = 0;
+        for (int i = 0; i < requests.length; i++) {
+            LoyaltyRoomRequest request = requests[i];
+            if (findBookingForLoyaltyRequest(request.getRequestId()) == null) {
+                unlinkedRequests[index++] = request;
+            }
+        }
+        sortVipRequestsByRegistrationOrder(unlinkedRequests);
+        return unlinkedRequests;
+    }
+
+    private void sortVipRequestsByRegistrationOrder(LoyaltyRoomRequest[] requests) {
+        for (int i = 1; i < requests.length; i++) {
+            LoyaltyRoomRequest current = requests[i];
+            int j = i - 1;
+            while (j >= 0 && requests[j].getBookingOrder() > current.getBookingOrder()) {
+                requests[j + 1] = requests[j];
+                j--;
+            }
+            requests[j + 1] = current;
+        }
+    }
+
+    private int getWaitingVipRequestCount(LoyaltyRoomRequest[] requests) {
+        int count = 0;
+        for (int i = 0; i < requests.length; i++) {
+            if (requests[i].getRoomAssignmentTime() == null) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int getAllocatedVipRequestCount(LoyaltyRoomRequest[] requests) {
+        return requests.length - getWaitingVipRequestCount(requests);
+    }
+
+    private int getDaoAllocationOrder(LoyaltyRoomRequest target,
+            CustomList<Booking> bookingAssignments, LoyaltyRoomRequest[] daoRequests) {
+        if (target.getRoomAssignmentTime() == null) {
+            return 0;
+        }
+
+        int order = 0;
+        for (int i = 0; i < bookingAssignments.size(); i++) {
+            if (!bookingAssignments.get(i).getRoomAssignmentTime().isAfter(target.getRoomAssignmentTime())) {
+                order++;
+            }
+        }
+        for (int i = 0; i < daoRequests.length; i++) {
+            LocalDateTime assignmentTime = daoRequests[i].getRoomAssignmentTime();
+            if (assignmentTime != null && !assignmentTime.isAfter(target.getRoomAssignmentTime())) {
+                order++;
+            }
+        }
+        return order;
+    }
+
+    private int getDaoPriorityHonouredCount(LoyaltyRoomRequest[] daoRequests,
+            CustomList<Booking> bookings) {
+        int count = 0;
+        for (int i = 0; i < daoRequests.length; i++) {
+            LoyaltyRoomRequest request = daoRequests[i];
+            if (request.getRoomAssignmentTime() == null) {
+                continue;
+            }
+
+            boolean priorityHonoured = true;
+            for (int j = 0; j < bookings.size(); j++) {
+                Booking booking = bookings.get(j);
+                if (!isLoyaltyTier(booking.getMembershipType())
+                        && booking.getRoomAssignmentTime() != null
+                        && booking.getRegistrationTime().isBefore(request.getRegistrationTime())
+                        && booking.getRoomAssignmentTime().isBefore(request.getRoomAssignmentTime())) {
+                    priorityHonoured = false;
+                    break;
+                }
+            }
+            if (priorityHonoured) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private void sortByRegistrationTime(CustomList<Booking> bookings) {

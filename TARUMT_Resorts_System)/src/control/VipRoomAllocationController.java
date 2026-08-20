@@ -7,6 +7,7 @@ import adt.MapInterface;
 import adt.PriorityBinarySearchTreeInterface;
 import entity.LoyaltyRoomRequest;
 import entity.Room;
+import java.time.LocalDateTime;
 
 public class VipRoomAllocationController {
 
@@ -92,6 +93,7 @@ public class VipRoomAllocationController {
             return;
         }
         request.setAllocatedRoomNo(roomNumber);
+        request.setRoomAssignmentTime(LocalDateTime.now());
         addAllocatedRequest(request);
     }
 
@@ -111,6 +113,7 @@ public class VipRoomAllocationController {
             if (room != null) {
                 room.setStatus("Occupied");
                 current.setAllocatedRoomNo(room.getRoomNumber());
+                current.setRoomAssignmentTime(LocalDateTime.now());
                 addAllocatedRequest(current);
                 allocated = current;
             } else {
@@ -206,6 +209,15 @@ public class VipRoomAllocationController {
 
     public Room[] getRooms() {
         return rooms;
+    }
+
+    /** Returns a snapshot of VIP requests that have been allocated a room. */
+    public LoyaltyRoomRequest[] getAllocatedRequests() {
+        LoyaltyRoomRequest[] requests = new LoyaltyRoomRequest[allocatedCount];
+        for (int i = 0; i < allocatedCount; i++) {
+            requests[i] = allocatedRequests[i];
+        }
+        return requests;
     }
 
     public double calculateTotalSpending(LoyaltyRoomRequest[] requests) {
