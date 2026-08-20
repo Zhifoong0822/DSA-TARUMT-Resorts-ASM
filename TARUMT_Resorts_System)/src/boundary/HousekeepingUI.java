@@ -138,8 +138,6 @@ public class HousekeepingUI {
     // SEARCH HOUSEKEEPING TASK
     private void searchTask() {
 
-        System.out.print("Enter Task ID: ");
-
         String taskId = InputHelper.readNonBlankLine(scanner, "Enter Task ID: ");
 
         HousekeepingTask task = controller.searchTaskById(taskId);
@@ -173,7 +171,7 @@ public class HousekeepingUI {
         System.out.println("\n--- UPDATE CLEANING STATUS ---");
         System.out.println("1. Assign Cleaning Task");
         System.out.println("2. Confirm Cleaning Completion");
-        System.out.println("3. Assign Inspection");
+        System.out.println("3. Confirm Inspection Completion");
         System.out.print("Enter choice: ");
 
         String input = scanner.nextLine().trim();
@@ -318,8 +316,6 @@ public class HousekeepingUI {
 
         System.out.println("ROOM STATUS REPORT FILTER");
 
-        System.out.print("Enter Floor (0 = All): ");
-
         int floor = InputHelper.readIntInRange(scanner, "Enter Floor (0 = All): ", 0, 3);
 
         System.out.println();
@@ -346,10 +342,6 @@ public class HousekeepingUI {
 
         System.out.println(
                 "4. Ready for Check-In"
-        );
-
-        System.out.print(
-                "Enter Status: "
         );
 
         int statusChoice = InputHelper.readIntInRange(scanner, "Enter Status: ", 0, 4);
