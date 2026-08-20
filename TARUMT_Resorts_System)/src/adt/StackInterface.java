@@ -4,10 +4,8 @@
  */
 package adt;
 
-/**
- *
- * @author Gigabyte
- */
+//@author Daniel Kok Wei Zen
+
 public interface StackInterface<T> {
 
     public void push(T newEntry);

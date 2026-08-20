@@ -13,10 +13,9 @@ import entity.StatusChange;
 import java.time.LocalDate;
 import java.util.Scanner;
 import utility.InputHelper;
-/**
- *
- * @author Gigabyte
- */
+
+//@author Daniel Kok Wei Zen
+
 public class HousekeepingUI {
 
     private HousekeepingController controller;

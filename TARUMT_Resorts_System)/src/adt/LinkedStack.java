@@ -4,10 +4,8 @@
  */
 package adt;
 
-/**
- *
- * @author Gigabyte
- */
+//@author Daniel Kok Wei Zen 
+
 public class LinkedStack<T> implements StackInterface<T> {
 
     private Node<T> topNode;

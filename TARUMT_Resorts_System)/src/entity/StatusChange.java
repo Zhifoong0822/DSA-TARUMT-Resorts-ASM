@@ -5,14 +5,12 @@
 package entity;
 
 import java.time.LocalDateTime;
-/**
- *
- * @author Gigabyte
- */
+
+//@author Daniel Kok Wei Zen
+
 public class StatusChange {
 
     private int taskIndex;
-
     private String taskId;
 
     private HousekeepingStatus previousStatus;
@@ -57,12 +55,6 @@ public class StatusChange {
     @Override
     public String toString() {
 
-        return taskId
-                + ": "
-                + previousStatus
-                + " -> "
-                + newStatus
-                + " at "
-                + updateTime;
+        return taskId + ": " + previousStatus + " -> " + newStatus + " at " + updateTime;
     }
 }

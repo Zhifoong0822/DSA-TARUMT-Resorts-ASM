@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+//Author: Daniel Kok Wei Zen
 package control;
 
 import adt.LinkedStack;
@@ -17,18 +14,18 @@ import entity.Room;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
-/**
- *
- * @author Gigabyte
- */
+
 public class HousekeepingController {
 
+    //array storing all housekeeping tasks
     private HousekeepingTask[] tasks;
 
     private int taskCount;
 
     private static final int MAX_TASKS = 100;
 
+    //statusHistory stack stores StatusChange objects
+    //declare statusHistory variable only
     private StackInterface<StatusChange> statusHistory;
 
     private MapInterface<String, Room> roomMap;
@@ -44,6 +41,7 @@ public class HousekeepingController {
 
         taskCount = 0;
 
+        //create actual stack object
         statusHistory = new LinkedStack<>();
 
         this.roomMap = roomMap;
@@ -51,10 +49,7 @@ public class HousekeepingController {
         loadTasksFromRoomDAO();
     }
 
-    // =====================================================
     // ADD TASK
-    // =====================================================
-
     public boolean addTask(HousekeepingTask task) {
 
         if (taskCount >= MAX_TASKS) {
@@ -73,10 +68,7 @@ public class HousekeepingController {
         return true;
     }
 
-    // =====================================================
     // LINEAR SEARCH BY TASK ID
-    // =====================================================
-
     public HousekeepingTask searchTaskById(String taskId) {
 
         int index = searchTaskIndexById(taskId);
@@ -101,17 +93,12 @@ public class HousekeepingController {
         return -1;
     }
 
-    // =====================================================
     // LINEAR SEARCH BY ROOM NUMBER
-    // =====================================================
-
     public HousekeepingTask searchTaskByRoom(String roomNumber) {
 
         for (int i = 0; i < taskCount; i++) {
 
-            if (tasks[i]
-                    .getRoomNumber()
-                    .equalsIgnoreCase(roomNumber)) {
+            if (tasks[i].getRoomNumber().equalsIgnoreCase(roomNumber)) {
 
                 return tasks[i];
             }
@@ -147,10 +134,7 @@ public class HousekeepingController {
         }
     }
 
-    // =====================================================
     // NORMAL CHECK-OUT
-    // =====================================================
-
     public String handleNormalCheckOut(String roomNumber) {
 
         Room room = roomMap.get(roomNumber);
@@ -170,7 +154,6 @@ public class HousekeepingController {
             return "Room " + roomNumber + " was not found in the housekeeping task list.";
         }
 
-        // A walk-in room assignment updates the shared room map immediately.
         // Synchronize this housekeeping task before recording the checkout workflow.
         if (task.getStatus() != HousekeepingStatus.OCCUPIED) {
             task.setStatus(HousekeepingStatus.OCCUPIED);
@@ -183,6 +166,7 @@ public class HousekeepingController {
                 HousekeepingStatus.DIRTY
         );
 
+        //push new change object into statusHistory stack
         statusHistory.push(change);
         task.setStatus(HousekeepingStatus.DIRTY);
         updateRoomStatus(task);
@@ -192,10 +176,7 @@ public class HousekeepingController {
                 + " status changed to Dirty. Housekeeping may now begin cleaning.";
     }
 
-    // =====================================================
     // LATE CHECK-OUT
-    // =====================================================
-
     public String HandleLateCheckOut(String roomNumber) {
 
         HousekeepingTask task = searchTaskByRoom(roomNumber);
@@ -248,10 +229,7 @@ public class HousekeepingController {
                 + "to change the room from Occupied to Dirty.";
     }
 
-    // =====================================================
-    // UPDATE STATUS
-    // =====================================================
-
+    // UPDATE HOUSEKEEPING STATUS
     public String updateTaskStatus(
             String taskId,
             HousekeepingStatus newStatus) {
@@ -295,9 +273,7 @@ public class HousekeepingController {
         updateRoomStatus(task);
 
         // If completed
-        if (newStatus
-                == HousekeepingStatus.READY_FOR_CHECK_IN) {
-
+        if (newStatus == HousekeepingStatus.READY_FOR_CHECK_IN) {
             LocalTime completionTime = LocalTime.now();
 
             task.setCompletionTime(completionTime);
@@ -316,76 +292,51 @@ public class HousekeepingController {
             );
         }
 
-        return "Status successfully updated from "
-                + oldStatus
-                + " to "
-                + newStatus
-                + ".";
+        return "Status successfully updated from " + oldStatus + " to " + newStatus + ".";
     }
 
-    // =====================================================
     // STATUS VALIDATION
-    // =====================================================
-
     private boolean isValidStatusTransition(
             HousekeepingStatus current,
             HousekeepingStatus next) {
 
         if (current == HousekeepingStatus.DIRTY) {
 
-            return next
-                    == HousekeepingStatus.CLEANING_IN_PROGRESS;
+            return next == HousekeepingStatus.CLEANING_IN_PROGRESS;
         }
 
-        if (current
-                == HousekeepingStatus.CLEANING_IN_PROGRESS) {
+        if (current == HousekeepingStatus.CLEANING_IN_PROGRESS) {
 
-            return next
-                    == HousekeepingStatus.INSPECTING;
+            return next == HousekeepingStatus.INSPECTING;
         }
 
         if (current == HousekeepingStatus.INSPECTING) {
 
-            return next
-                    == HousekeepingStatus.READY_FOR_CHECK_IN
-                    || next == HousekeepingStatus.DIRTY;
+            return next == HousekeepingStatus.READY_FOR_CHECK_IN || next == HousekeepingStatus.DIRTY;
         }
 
         return false;
     }
 
-    // =====================================================
-    // UNDO / ROLLBACK USING STACK
-    // =====================================================
-
+    // UNDO USING STACK (ROLLBACK)
     public String undoLatestStatusChange() {
 
         if (statusHistory.isEmpty()) {
-
             return "No status update available to undo.";
         }
 
-        StatusChange latestChange
-                = statusHistory.pop();
+        StatusChange latestChange = statusHistory.pop();
 
-        int taskIndex
-                = latestChange.getTaskIndex();
+        int taskIndex = latestChange.getTaskIndex();
 
-        HousekeepingTask task
-                = tasks[taskIndex];
+        HousekeepingTask task = tasks[taskIndex];
 
         task.setStatus(
                 latestChange.getPreviousStatus()
         );
         updateRoomStatus(task);
 
-        /*
-         * If READY status is rolled back,
-         * remove completion information.
-         */
-        if (latestChange.getNewStatus()
-                == HousekeepingStatus.READY_FOR_CHECK_IN) {
-
+        if (latestChange.getNewStatus() == HousekeepingStatus.READY_FOR_CHECK_IN) {
             task.setCompletionTime(null);
             task.setCompletionMinutes(0);
         }
@@ -397,10 +348,7 @@ public class HousekeepingController {
                 + latestChange.getPreviousStatus();
     }
 
-    // =====================================================
     // VIEW MOST RECENT CHANGE
-    // =====================================================
-
     public StatusChange getLatestStatusChange() {
 
         return statusHistory.peek();
@@ -455,8 +403,7 @@ public class HousekeepingController {
                 ? "All"
                 : statusFilter.toString();
 
-        StringBuilder report
-                = new StringBuilder();
+        StringBuilder report = new StringBuilder();
 
         report.append("\n");
         report.append(
@@ -575,10 +522,7 @@ public class HousekeepingController {
 
         int staffCount = 0;
 
-        // ============================================
         // SEARCH AND FILTER RECORDS
-        // ============================================
-
         for (int i = 0; i < taskCount; i++) {
 
             HousekeepingTask task = tasks[i];
@@ -713,10 +657,7 @@ public class HousekeepingController {
         return report.toString();
     }
 
-    // =====================================================
     // SEARCH STAFF
-    // =====================================================
-
     private int findStaffIndex(
             String[] staffIds,
             int staffCount,
@@ -734,10 +675,7 @@ public class HousekeepingController {
         return -1;
     }
 
-    // =====================================================
     // INSERTION SORT STAFF PERFORMANCE
-    // =====================================================
-
     private void insertionSortStaffPerformance(
             String[] staffIds,
             int[] completedTasks,
@@ -784,10 +722,7 @@ public class HousekeepingController {
         }
     }
 
-    // =====================================================
     // DISPLAY ALL TASKS
-    // =====================================================
-
     public String getAllTasks() {
 
         StringBuilder output
@@ -839,10 +774,7 @@ public class HousekeepingController {
         return output.toString();
     }
 
-    // =====================================================
     // BUILD HOUSEKEEPING TASKS FROM ROOM DAO DATA
-    // =====================================================
-
     private void loadTasksFromRoomDAO() {
 
         Room[] rooms = roomMap.values(new Room[roomMap.size()]);

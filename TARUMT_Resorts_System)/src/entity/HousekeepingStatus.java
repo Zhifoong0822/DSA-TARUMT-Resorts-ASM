@@ -4,10 +4,8 @@
  */
 package entity;
 
-/**
- *
- * @author Gigabyte
- */
+//@author Daniel Kok Wei Zen
+
 public enum HousekeepingStatus {
 
     OCCUPIED("Occupied"),

@@ -7,10 +7,8 @@ package entity;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-/**
- *
- * @author Gigabyte
- */
+//@author Daniel Kok Wei Zen
+
 public class HousekeepingTask {
 
     private String taskId;
