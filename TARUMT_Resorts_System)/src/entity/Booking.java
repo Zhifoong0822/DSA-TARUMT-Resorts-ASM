@@ -1,8 +1,13 @@
-//Author: Chan Yu He
 package entity;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
+
+/**
+ *
+ * @author Yu He
+ */
 
 public class Booking {
 

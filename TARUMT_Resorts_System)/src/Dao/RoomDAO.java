@@ -18,7 +18,7 @@ public class RoomDAO {
         Room r6 = new Room("P301", "Penthouse", "Occupied");
         Room r7 = new Room("P302", "Penthouse", "Ready for Check-In");
         Room r8 = new Room("D104", "Deluxe", "Cleaning In Progress");
-        Room r9 = new Room("D105", "Deluxe", "Ready for Check-In");
+        Room r9 = new Room("D105", "Deluxe", "Occupied");
         Room r10 = new Room("S203", "Suite", "Occupied");
         Room r11 = new Room("S204", "Suite", "Cleaning In Progress");
         Room r12 = new Room("P303", "Penthouse", "Occupied");

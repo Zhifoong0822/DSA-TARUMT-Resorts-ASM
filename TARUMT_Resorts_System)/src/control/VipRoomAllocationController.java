@@ -299,7 +299,7 @@ public class VipRoomAllocationController {
         nextRequestNumber++;
         return requestId;
     }
-
+    
     private void sortByPriority(LoyaltyRoomRequest[] array) {
         for (int i = 1; i < array.length; i++) {
             LoyaltyRoomRequest key = array[i];
