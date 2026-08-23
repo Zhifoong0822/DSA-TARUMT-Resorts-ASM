@@ -183,6 +183,11 @@ public class RegisterInterfaceController {
 
 
     public LoyaltyRoomRequest registerLoyaltyBooking(Member member, String roomType,int numberOfNights) {
+        return registerLoyaltyBooking(member, roomType, numberOfNights, 1);
+    }
+
+    public LoyaltyRoomRequest registerLoyaltyBooking(Member member, String roomType,
+            int numberOfNights, int numberOfRooms) {
         if (member == null || vipController == null) {
             return null;
         }
@@ -192,13 +197,14 @@ public class RegisterInterfaceController {
         bookingCounter++;
 
         Booking booking = new Booking(bookingId, confirmationNumber, waitingNumber, member,roomType, numberOfNights);
+        booking.setNumberOfRooms(numberOfRooms);
         return saveLoyaltyBooking(booking);
     }
 
     private LoyaltyRoomRequest saveLoyaltyBooking(Booking booking) {
         LoyaltyRoomRequest request = vipController.addRequest(
                 booking.getGuestDisplayName(), booking.getMembershipType(), booking.getRoomType(),
-                booking.getNumberOfNights(), booking.getTotalBilling());
+                booking.getNumberOfNights(), booking.getTotalBilling(), booking.getNumberOfRooms());
 
         bookingHistory.add(booking);
         bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
@@ -317,9 +323,7 @@ public class RegisterInterfaceController {
 
     Booking booking = loyaltyBookingByRequestId.get(request.getRequestId());
     if (booking != null) {
-        booking.setRoomId(room.getRoomNumber());
-        booking.setRoomAssignmentTime(LocalDateTime.now());
-        booking.setBookingStatus("ASSIGNED");
+        booking.assignRoom(room.getRoomNumber());
         createCheckedInGuestProfile(booking);
     }
     room.setStatus("Occupied");
@@ -332,6 +336,7 @@ public class RegisterInterfaceController {
     System.out.println("Tier            : "+ request.getLoyaltyTier());
     System.out.println("Room Type       : "+ request.getRoomType());
     System.out.println("Room Number     : "+ request.getAllocatedRoomNo());
+    System.out.println("Rooms Remaining : "+ request.getRemainingRooms());
     System.out.println("Number of Nights: "+ request.getStayNights());
     System.out.println("\nPlease proceed to room "+ request.getAllocatedRoomNo()+ ".");
 }  
@@ -364,17 +369,18 @@ public class RegisterInterfaceController {
 
     private void displayLoyaltyWaitingList() {
         LoyaltyRoomRequest[] requests =vipController.getWaitingPriorityReport("All", "Elite");
-        System.out.printf("%-10s %-15s %-12s %-12s %-6s%n",
-                "Req ID","Name","Tier","Room Type","Nights");
+        System.out.printf("%-10s %-15s %-12s %-12s %-6s %-6s%n",
+                "Req ID","Name","Tier","Room Type","Nights","Left");
 
         System.out.println("---------------------------------------------------------------");
         for (int i = 0; i < requests.length; i++) {
-            System.out.printf("%-10s %-15s %-12s %-12s %-6d%n",
+            System.out.printf("%-10s %-15s %-12s %-12s %-6d %-6d%n",
                     requests[i].getRequestId(),
                     requests[i].getGuestName(),
                     requests[i].getLoyaltyTier(),
                     requests[i].getRoomType(),
-                    requests[i].getStayNights()
+                    requests[i].getStayNights(),
+                    requests[i].getRemainingRooms()
             );
         }
     }
@@ -386,10 +392,12 @@ public class RegisterInterfaceController {
     public Booking peekNextEligibleBooking() {
         LoyaltyRoomRequest request = getNextAvailableLoyaltyRequest();
         if (request != null) {
-            return new Booking(request.getRequestId(),request.getRequestId(),
+            Booking booking = new Booking(request.getRequestId(),request.getRequestId(),
                     request.getRequestId(),request.getGuestName(),"",
                     request.getLoyaltyTier(),request.getRoomType(),request.getStayNights()
             );
+            booking.setNumberOfRooms(request.getRemainingRooms());
+            return booking;
         }
         for (int i = 0; i < bookingQueue.size(); i++) {
             Booking booking = bookingQueue.get(i);

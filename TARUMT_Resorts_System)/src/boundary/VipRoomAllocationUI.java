@@ -93,8 +93,12 @@ public class VipRoomAllocationUI {
             return;
         }
 
-        System.out.print("Enter IC/Passport: ");
+        System.out.print("Enter IC/Passport (Enter -1 to exit): ");
         String icNumber = scanner.nextLine().trim();
+        if (icNumber.equals("-1")) {
+            System.out.println("Request cancelled.");
+            return;
+        }
 
         Member member = registerController.findMemberByIC(icNumber);
 
@@ -116,38 +120,72 @@ public class VipRoomAllocationUI {
         System.out.println("Name : " + member.getMemberName());
         System.out.println("Tier : " + member.getMembershipType());
 
-        System.out.print("Room type (Deluxe/Suite/Penthouse): ");
-        String roomType = scanner.nextLine().trim();
-        System.out.print("Stay nights: ");
-        int stayNights = readInt();
-
-        double nightlyRate = controller.getNightlyRate(roomType);
-        if (nightlyRate == 0) {
-            System.out.println("[Error] Room type must be Deluxe, Suite, or Penthouse.");
-            return;
-        }
-        if (stayNights <= 0) {
-            System.out.println("[Error] Stay nights must be at least 1.");
+        int stayNights = inputStayNights();
+        if (stayNights == -1) {
             return;
         }
 
-        double spending = controller.calculateBill(roomType, stayNights);
-        LoyaltyRoomRequest request = registerController.registerLoyaltyBooking(member, roomType,
-                stayNights);
-        if (request == null) {
-            System.out.println("[Error] Unable to create the VIP booking.");
+        int numberOfRooms = inputNumberOfRooms();
+        if (numberOfRooms == -1) {
             return;
         }
 
-        System.out.println("Request added to priority binary search tree.");
-        System.out.println("Auto Request ID: " + request.getRequestId());
-        Booking booking = registerController.findBookingForLoyaltyRequest(request.getRequestId());
-        if (booking != null) {
-            System.out.println("Confirmation No.: " + booking.getConfirmationNumber());
+        String[] roomTypes = new String[numberOfRooms];
+        for (int i = 0; i < numberOfRooms; i++) {
+            roomTypes[i] = inputRoomType(i + 1);
+            if (roomTypes[i] == null) {
+                return;
+            }
         }
-        System.out.printf("Room rate      : RM %.2f per night%n", nightlyRate);
-        System.out.printf("Total bill     : RM %.2f (%d night%s)%n", spending, stayNights,
-                stayNights == 1 ? "" : "s");
+
+        String[] uniqueTypes = new String[numberOfRooms];
+        int[] quantities = new int[numberOfRooms];
+        int uniqueCount = 0;
+        for (int i = 0; i < roomTypes.length; i++) {
+            int foundIndex = -1;
+            for (int j = 0; j < uniqueCount; j++) {
+                if (uniqueTypes[j].equalsIgnoreCase(roomTypes[i])) {
+                    foundIndex = j;
+                    break;
+                }
+            }
+
+            if (foundIndex == -1) {
+                uniqueTypes[uniqueCount] = roomTypes[i];
+                quantities[uniqueCount] = 1;
+                uniqueCount++;
+            } else {
+                quantities[foundIndex]++;
+            }
+        }
+
+        double totalSpending = 0;
+        System.out.println("\n===== LOYALTY REQUEST SUCCESSFUL =====");
+        for (int i = 0; i < uniqueCount; i++) {
+            LoyaltyRoomRequest request = registerController.registerLoyaltyBooking(member, uniqueTypes[i],
+                    stayNights, quantities[i]);
+            if (request == null) {
+                System.out.println("[Error] Unable to create the VIP booking.");
+                return;
+            }
+
+            Booking booking = registerController.findBookingForLoyaltyRequest(request.getRequestId());
+            totalSpending += controller.calculateBill(uniqueTypes[i], stayNights) * quantities[i];
+
+            System.out.println("\nRoom Request " + (i + 1));
+            System.out.println("Auto Request ID : " + request.getRequestId());
+            if (booking != null) {
+                System.out.println("Confirmation No.: " + booking.getConfirmationNumber());
+            }
+            System.out.println("Room Type       : " + request.getRoomType());
+            System.out.println("Number of Rooms : " + request.getNumberOfRooms());
+            System.out.println("Stay Nights     : " + request.getStayNights());
+            System.out.printf("Room Bill       : RM %.2f%n",
+                    controller.calculateBill(uniqueTypes[i], stayNights) * quantities[i]);
+        }
+
+        System.out.println("\nAll request added to priority binary search tree.");
+        System.out.printf("Total bill      : RM %.2f%n", totalSpending);
     }
 
     private void callNextGuest() {
@@ -170,6 +208,7 @@ public class VipRoomAllocationUI {
         System.out.println("Guest          : " + booking.getGuestDisplayName());
         System.out.println("Type           : " + booking.getMembershipType());
         System.out.println("Room Type      : " + booking.getRoomType());
+        System.out.println("Rooms Remaining: " + booking.getRemainingRooms());
         System.out.println("Number of Nights : " + booking.getNumberOfNights());
         System.out.printf("Total Bill       : RM %.2f%n", booking.getTotalBilling());
 
@@ -204,8 +243,12 @@ public class VipRoomAllocationUI {
     }
 
     private void searchRequest() {
-        System.out.print("\nEnter request ID: ");
+        System.out.print("\nEnter request ID (Enter -1 to exit): ");
         String requestId = scanner.nextLine().trim();
+        if (requestId.equals("-1")) {
+            System.out.println("Search cancelled.");
+            return;
+        }
         LoyaltyRoomRequest request = controller.findRequestById(requestId);
 
         if (request == null) {
@@ -219,10 +262,14 @@ public class VipRoomAllocationUI {
 
     private void waitingPriorityReport() {
         System.out.println("\n--- WAITING PRIORITY REPORT ---");
-        System.out.print("Room type filter (All/Deluxe/Suite/Penthouse): ");
-        String roomType = scanner.nextLine().trim();
-        System.out.print("Minimum tier (PLATINUM/DIAMOND/ELITE): ");
-        String tier = scanner.nextLine().trim();
+        String roomType = inputRoomTypeFilter();
+        if (roomType == null) {
+            return;
+        }
+        String tier = inputMinimumTier();
+        if (tier == null) {
+            return;
+        }
 
         LoyaltyRoomRequest[] report = controller.getWaitingPriorityReport(roomType, tier);
         System.out.println("\nFiltered by room type and tier. Sorted by highest priority.");
@@ -235,10 +282,14 @@ public class VipRoomAllocationUI {
 
     private void allocationSummaryReport() {
         System.out.println("\n--- ALLOCATION SUMMARY REPORT ---");
-        System.out.print("Room type filter (All/Deluxe/Suite/Penthouse): ");
-        String roomType = scanner.nextLine().trim();
-        System.out.print("Minimum stay nights: ");
-        int nights = readInt();
+        String roomType = inputRoomTypeFilter();
+        if (roomType == null) {
+            return;
+        }
+        int nights = inputMinimumStayNights();
+        if (nights == -1) {
+            return;
+        }
 
         LoyaltyRoomRequest[] report = controller.getAllocationSummaryReport(roomType, nights);
         System.out.println("\nFiltered by room type and stay nights. Sorted by tier and spending.");
@@ -278,25 +329,27 @@ public class VipRoomAllocationUI {
 
     private void printRequestHeader() {
         printLine();
-        System.out.printf("| %-8s | %-18s | %-10s | %-12s | %-6s | %-12s | %-8s | %-8s |\n",
-                "Req ID", "Guest", "Tier", "Room Type", "Nights", "Spending", "Score", "Room");
+        System.out.printf("| %-8s | %-18s | %-10s | %-12s | %-6s | %-5s | %-5s | %-12s | %-8s | %-12s |\n",
+                "Req ID", "Guest", "Tier", "Room Type", "Nights", "Rooms", "Left", "Spending", "Score", "Room");
         printLine();
     }
 
     private void printRequestRow(LoyaltyRoomRequest request) {
-        System.out.printf("| %-8s | %-18s | %-10s | %-12s | %-6d | RM %-9.2f | %-8d | %-8s |\n",
+        System.out.printf("| %-8s | %-18s | %-10s | %-12s | %-6d | %-5d | %-5d | RM %-9.2f | %-8d | %-12s |\n",
                 request.getRequestId(),
                 request.getGuestName(),
                 request.getLoyaltyTier(),
                 request.getRoomType(),
                 request.getStayNights(),
+                request.getNumberOfRooms(),
+                request.getRemainingRooms(),
                 request.getTotalSpending(),
                 request.getPriorityScore(),
                 request.getAllocatedRoomNo());
     }
 
     private void printLine() {
-        System.out.println("+----------+--------------------+------------+--------------+--------+--------------+----------+----------+");
+        System.out.println("+----------+--------------------+------------+--------------+--------+-------+-------+--------------+----------+--------------+");
     }
 
     private int readInt() {
@@ -307,12 +360,130 @@ public class VipRoomAllocationUI {
         }
     }
 
-    private double readDouble() {
-        try {
-            return Double.parseDouble(scanner.nextLine().trim());
-        } catch (NumberFormatException e) {
-            return 0;
+    private int inputStayNights() {
+        while (true) {
+            System.out.print("Enter Stay Nights (Enter -1 to exit): ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("-1")) {
+                System.out.println("Request cancelled.");
+                return -1;
+            }
+            try {
+                int nights = Integer.parseInt(input);
+                if (nights <= 0) {
+                    System.out.println("Stay nights must be greater than 0.");
+                    continue;
+                }
+                return nights;
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            }
         }
+    }
+
+    private int inputNumberOfRooms() {
+        while (true) {
+            System.out.print("Enter Number of Rooms (Enter -1 to exit): ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("-1")) {
+                System.out.println("Request cancelled.");
+                return -1;
+            }
+            try {
+                int numberOfRooms = Integer.parseInt(input);
+                if (numberOfRooms <= 0) {
+                    System.out.println("Number of rooms must be greater than 0.");
+                    continue;
+                }
+                return numberOfRooms;
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            }
+        }
+    }
+
+    private String inputRoomType(int roomNumber) {
+        while (true) {
+            System.out.print("Enter Room Type for Room " + roomNumber
+                    + " (Deluxe/Suite/Penthouse, or -1 to exit): ");
+            String roomType = scanner.nextLine().trim();
+            if (roomType.equals("-1")) {
+                System.out.println("Request cancelled.");
+                return null;
+            }
+            if (isValidRoomType(roomType)) {
+                return formatRoomType(roomType);
+            }
+            System.out.println("Room type must be Deluxe, Suite, or Penthouse.");
+        }
+    }
+
+    private String inputRoomTypeFilter() {
+        while (true) {
+            System.out.print("Room type filter (All/Deluxe/Suite/Penthouse, or -1 to exit): ");
+            String roomType = scanner.nextLine().trim();
+            if (roomType.equals("-1")) {
+                System.out.println("Report cancelled.");
+                return null;
+            }
+            if (roomType.length() == 0 || roomType.equalsIgnoreCase("All") || isValidRoomType(roomType)) {
+                return roomType;
+            }
+            System.out.println("Please enter All, Deluxe, Suite, or Penthouse.");
+        }
+    }
+
+    private String inputMinimumTier() {
+        while (true) {
+            System.out.print("Minimum tier (Platinum/Diamond/Elite, or -1 to exit): ");
+            String tier = scanner.nextLine().trim();
+            if (tier.equals("-1")) {
+                System.out.println("Report cancelled.");
+                return null;
+            }
+            if (isLoyaltyTier(tier)) {
+                return tier;
+            }
+            System.out.println("Please enter Platinum, Diamond, or Elite.");
+        }
+    }
+
+    private int inputMinimumStayNights() {
+        while (true) {
+            System.out.print("Minimum stay nights (Enter -1 to exit): ");
+            String input = scanner.nextLine().trim();
+            if (input.equals("-1")) {
+                System.out.println("Report cancelled.");
+                return -1;
+            }
+            try {
+                int nights = Integer.parseInt(input);
+                if (nights < 0) {
+                    System.out.println("Minimum stay nights cannot be negative.");
+                    continue;
+                }
+                return nights;
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            }
+        }
+    }
+
+    private boolean isValidRoomType(String roomType) {
+        return roomType != null
+                && (roomType.equalsIgnoreCase("Deluxe")
+                || roomType.equalsIgnoreCase("Suite")
+                || roomType.equalsIgnoreCase("Penthouse"));
+    }
+
+    private String formatRoomType(String roomType) {
+        if (roomType.equalsIgnoreCase("Deluxe")) {
+            return "Deluxe";
+        }
+        if (roomType.equalsIgnoreCase("Suite")) {
+            return "Suite";
+        }
+        return "Penthouse";
     }
 
     private boolean isLoyaltyTier(String tier) {

@@ -11,6 +11,8 @@ public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
     private String loyaltyTier;
     private String roomType;
     private int stayNights;
+    private int numberOfRooms;
+    private int remainingRooms;
     private double totalSpending;
     private int bookingOrder;
     private String allocatedRoomNo;
@@ -27,6 +29,8 @@ public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
         this.loyaltyTier = loyaltyTier;
         this.roomType = roomType;
         this.stayNights = stayNights;
+        this.numberOfRooms = 1;
+        this.remainingRooms = 1;
         this.totalSpending = totalSpending;
         this.bookingOrder = bookingOrder;
         this.allocatedRoomNo = "-";
@@ -73,6 +77,22 @@ public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
         this.stayNights = stayNights;
     }
 
+    public int getNumberOfRooms() {
+        return numberOfRooms;
+    }
+
+    public int getRemainingRooms() {
+        return remainingRooms;
+    }
+
+    public void setNumberOfRooms(int numberOfRooms) {
+        if (numberOfRooms <= 0) {
+            numberOfRooms = 1;
+        }
+        this.numberOfRooms = numberOfRooms;
+        this.remainingRooms = numberOfRooms;
+    }
+
     public double getTotalSpending() {
         return totalSpending;
     }
@@ -95,6 +115,18 @@ public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
 
     public void setAllocatedRoomNo(String allocatedRoomNo) {
         this.allocatedRoomNo = allocatedRoomNo;
+    }
+
+    public void assignRoom(String roomNumber) {
+        if (allocatedRoomNo == null || allocatedRoomNo.equals("-")) {
+            allocatedRoomNo = roomNumber;
+        } else {
+            allocatedRoomNo += ", " + roomNumber;
+        }
+        if (remainingRooms > 0) {
+            remainingRooms--;
+        }
+        roomAssignmentTime = LocalDateTime.now();
     }
 
     public LocalDateTime getRegistrationTime() {
@@ -169,8 +201,8 @@ public class LoyaltyRoomRequest implements Comparable<LoyaltyRoomRequest> {
 
     @Override
     public String toString() {
-        return String.format("%-8s %-18s %-10s %-12s %-6d RM %-10.2f %-8d %-8s",
-                requestId, guestName, loyaltyTier, roomType, stayNights, totalSpending,
-                getPriorityScore(), allocatedRoomNo);
+        return String.format("%-8s %-18s %-10s %-12s %-6d %-6d RM %-10.2f %-8d %-8s",
+                requestId, guestName, loyaltyTier, roomType, stayNights, remainingRooms,
+                totalSpending, getPriorityScore(), allocatedRoomNo);
     }
 }

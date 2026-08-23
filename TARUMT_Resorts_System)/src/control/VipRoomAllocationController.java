@@ -34,9 +34,15 @@ public class VipRoomAllocationController {
 
     public LoyaltyRoomRequest addRequest(String guestName, String loyaltyTier,
             String roomType, int stayNights, double totalSpending) {
+        return addRequest(guestName, loyaltyTier, roomType, stayNights, totalSpending, 1);
+    }
+
+    public LoyaltyRoomRequest addRequest(String guestName, String loyaltyTier,
+            String roomType, int stayNights, double totalSpending, int numberOfRooms) {
         String requestId = generateRequestId();
         LoyaltyRoomRequest request = new LoyaltyRoomRequest(requestId, guestName, loyaltyTier,
                 roomType, stayNights, totalSpending, nextBookingOrder);
+        request.setNumberOfRooms(numberOfRooms);
 
         waitingRequests.add(request);
         nextBookingOrder++;
@@ -92,9 +98,12 @@ public class VipRoomAllocationController {
         if (request == null) {
             return;
         }
-        request.setAllocatedRoomNo(roomNumber);
-        request.setRoomAssignmentTime(LocalDateTime.now());
-        addAllocatedRequest(request);
+        request.assignRoom(roomNumber);
+        if (request.getRemainingRooms() > 0) {
+            waitingRequests.add(request);
+        } else {
+            addAllocatedRequest(request);
+        }
     }
 
     public LoyaltyRoomRequest allocateNextRoom() {
@@ -112,9 +121,12 @@ public class VipRoomAllocationController {
 
             if (room != null) {
                 room.setStatus("Occupied");
-                current.setAllocatedRoomNo(room.getRoomNumber());
-                current.setRoomAssignmentTime(LocalDateTime.now());
-                addAllocatedRequest(current);
+                current.assignRoom(room.getRoomNumber());
+                if (current.getRemainingRooms() > 0) {
+                    waitingRequests.add(current);
+                } else {
+                    addAllocatedRequest(current);
+                }
                 allocated = current;
             } else {
                 skipped[skippedCount] = current;
