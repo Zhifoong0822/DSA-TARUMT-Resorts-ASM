@@ -19,11 +19,11 @@ public class MemberDao {
 
         members = new CustomList<>();
 
-        members.add(new Member("M001", "Alice", "Elite", "000000000001"));
-        members.add(new Member("M002", "Bob", "Diamond", "000000000002"));
-        members.add(new Member("M003", "John", "Platinum", "000000000003"));
-        members.add(new Member("M004", "Sarah", "Diamond", "000000000004"));
-        members.add(new Member("M005", "David", "Elite", "000000000005"));
+        members.add(new Member("M001", "Alice", "Elite", "001210105122"));
+        members.add(new Member("M002", "Bob", "Diamond", "980123108199"));
+        members.add(new Member("M003", "John", "Platinum", "051013102221"));
+        members.add(new Member("M004", "Sarah", "Diamond", "060822100122"));
+        members.add(new Member("M005", "David", "Elite", "060818102013"));
     }
 
     public Member findMemberByIC(String icNumber) {

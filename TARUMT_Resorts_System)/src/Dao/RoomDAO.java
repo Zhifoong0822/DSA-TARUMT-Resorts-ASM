@@ -23,6 +23,10 @@ public class RoomDAO {
         Room r11 = new Room("S204", "Suite", "Cleaning In Progress");
         Room r12 = new Room("P303", "Penthouse", "Occupied");
         Room r13 = new Room("D106", "Deluxe", "Occupied");
+        Room r14 = new Room("D107", "Deluxe", "Ready for Check-In");
+        Room r15 = new Room("P304", "Penthouse", "Ready for Check-In");
+        Room r16 = new Room("P306", "Penthouse", "Ready for Check-In");
+        Room r17 = new Room("S205", "Suite", "Ready for Check-In");
 
         map.put(r1.getRoomNumber(), r1);
         map.put(r2.getRoomNumber(), r2);
@@ -37,7 +41,10 @@ public class RoomDAO {
         map.put(r11.getRoomNumber(), r11);
         map.put(r12.getRoomNumber(), r12);
         map.put(r13.getRoomNumber(), r13);
-
+        map.put(r14.getRoomNumber(), r14);
+        map.put(r15.getRoomNumber(), r15);
+        map.put(r16.getRoomNumber(), r16);
+        map.put(r17.getRoomNumber(), r17);
         return map;
     }
 }
