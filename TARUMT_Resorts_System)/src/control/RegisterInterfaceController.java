@@ -29,7 +29,7 @@ public class RegisterInterfaceController {
     private MapInterface<String, GuestProfile> checkedInGuestProfiles;
 
     private int bookingCounter = 1;
-
+    private static final int DAO_REGISTRATION_COUNT=4;
     public RegisterInterfaceController(MemberDao memberDAO,MapInterface<String, Room> roomMap) {
         this(memberDAO, roomMap, null);
     }
@@ -621,20 +621,6 @@ public class RegisterInterfaceController {
                 "Booking ID", "Wait No", "Guest", "Guest Type", "Register Order", "Allocation Order");
         System.out.println("----------------------------------------------------------------------");
 
-       for (int i =0; i< registrationOrder.size();i++) {
-            Booking booking=registrationOrder.get(i);
-            
-            int registerOrder =getRegistrationOrder(registrationOrder,booking);
-
-            int assignOrder =
-                    getAssignmentOrder(assignmentOrder,booking);
-
-            String assignment =assignOrder == 0 ? "-": String.valueOf(assignOrder);
-            System.out.printf("%-10s %-8s %-15s %-12s %-16d %-16s%n",
-                    booking.getBookingId(), booking.getWaitingNumber(), booking.getGuestDisplayName(),
-                    booking.getMembershipType(), registerOrder, assignment);
-        }
-
         LoyaltyRoomRequest[] daoVipRequests = getUnlinkedVipDaoRequests();
         for (int i = 0; i < daoVipRequests.length; i++) {
             LoyaltyRoomRequest request = daoVipRequests[i];
@@ -645,6 +631,17 @@ public class RegisterInterfaceController {
                     request.getLoyaltyTier(), request.getBookingOrder(), allocation);
         }
 
+        for (int i =0; i< registrationOrder.size();i++) {
+            Booking booking=registrationOrder.get(i);
+            int registerOrder =getRegistrationOrder(registrationOrder,booking);
+            int assignOrder = getCombinedAllocationOrder(
+                    booking.getRoomAssignmentTime(), assignmentOrder, daoVipRequests);
+            String assignment =assignOrder == 0 ? "-": String.valueOf(assignOrder);
+            System.out.printf("%-10s %-8s %-15s %-12s %-16d %-16s%n",
+                    booking.getBookingId(), booking.getWaitingNumber(), booking.getGuestDisplayName(),
+                    booking.getMembershipType(), registerOrder, assignment);
+        }
+        
         System.out.println("----------------------------------------------------------------------");
         int loyaltyCount = 0;
         int regularCount = 0;
@@ -773,19 +770,24 @@ public class RegisterInterfaceController {
 
     private int getDaoAllocationOrder(LoyaltyRoomRequest target,
             CustomList<Booking> bookingAssignments, LoyaltyRoomRequest[] daoRequests) {
-        if (target.getRoomAssignmentTime() == null) {
-            return 0;
+        return getCombinedAllocationOrder(target.getRoomAssignmentTime(),
+                bookingAssignments, daoRequests);
+    }
+     private int getCombinedAllocationOrder(LocalDateTime targetAssignmentTime,
+            CustomList<Booking> bookingAssignments, LoyaltyRoomRequest[] daoRequests) {
+        if (targetAssignmentTime == null) {        
+        return 0;
         }
 
         int order = 0;
         for (int i = 0; i < bookingAssignments.size(); i++) {
-            if (!bookingAssignments.get(i).getRoomAssignmentTime().isAfter(target.getRoomAssignmentTime())) {
+            if (!bookingAssignments.get(i).getRoomAssignmentTime().isAfter(targetAssignmentTime)) {
                 order++;
             }
         }
         for (int i = 0; i < daoRequests.length; i++) {
             LocalDateTime assignmentTime = daoRequests[i].getRoomAssignmentTime();
-            if (assignmentTime != null && !assignmentTime.isAfter(target.getRoomAssignmentTime())) {
+            if (assignmentTime != null && !assignmentTime.isAfter(targetAssignmentTime)) {
                 order++;
             }
         }
@@ -855,7 +857,7 @@ public class RegisterInterfaceController {
         for (int i = 0;i < bookings.size();i++) {
 
             if (bookings.get(i).getBookingId().equals(target.getBookingId())) {
-                return i + 1;
+                return i + 1 + DAO_REGISTRATION_COUNT;
             }
         }
         return 0;
