@@ -408,16 +408,6 @@ public class RegisterInterfaceController {
         return vipController.peekNextRequestWithAvailableRoom();
     }
 
-    private Booking removeFirstBookingForRoomType(String roomType) {
-        for (int i = 0; i < bookingQueue.size(); i++) {
-            Booking booking = bookingQueue.get(i);
-            if (booking.getRoomType().equalsIgnoreCase(roomType)) {
-                return bookingQueue.remove(i);
-            }
-        }
-        return null;
-    }
-
     private Booking removeBooking(Booking target) {
         for (int i = 0; i < bookingQueue.size(); i++) {
             if (bookingQueue.get(i) == target) {
@@ -873,55 +863,6 @@ public class RegisterInterfaceController {
         }
 
         return 0;
-    }
-
-
-    private int getNormalServedFirst(
-            CustomList<Booking> registrationOrder,
-            CustomList<Booking> assignmentOrder) {
-
-        int count = 0;
-
-        for (int i=0;i< registrationOrder.size();i++) {
-            Booking normal = registrationOrder.get(i);
-            
-            if (!normal.getMembershipType().equalsIgnoreCase("NORMAL")) {
-                continue;
-            }
-
-            int normalRegistration =getRegistrationOrder(registrationOrder,normal);
-            int normalAssignment =getAssignmentOrder(assignmentOrder,normal);
-
-            if (normalAssignment == 0) {
-                continue;
-            }
-
-            boolean servedBeforeVip = true;
-
-            for (int j =0; j< registrationOrder.size();j++) {
-            Booking vip= registrationOrder.get(j);
-
-                if (!vip.getMembershipType()
-                        .equalsIgnoreCase("VIP")) {
-
-                    continue;
-                }
-
-                int vipRegistration =getRegistrationOrder(registrationOrder, vip);
-
-                int vipAssignment =getAssignmentOrder(assignmentOrder,vip);
-                if (vipRegistration < normalRegistration && vipAssignment > 0 && vipAssignment < normalAssignment) {
-                    servedBeforeVip = false;
-                    break;
-                }
-            }
-
-            if (servedBeforeVip) {
-                count++;
-            }
-        }
-
-        return count;
     }
 
     private boolean isLoyaltyTier(String tier) {
