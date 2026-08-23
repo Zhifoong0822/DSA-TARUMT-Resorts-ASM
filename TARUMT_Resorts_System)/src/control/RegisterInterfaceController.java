@@ -147,10 +147,6 @@ public class RegisterInterfaceController {
         System.out.println("\nPlease wait for your number to be called.");
     }
 
-    /**
-     * Combines matching room types into one queue entry; different room types
-     * become independent entries so they can be allocated separately.
-     */
     public void registerBooking(String icNumber, String[] roomTypes, int numberOfNights,
             String guestName) {
         if (roomTypes == null || roomTypes.length == 0) {
