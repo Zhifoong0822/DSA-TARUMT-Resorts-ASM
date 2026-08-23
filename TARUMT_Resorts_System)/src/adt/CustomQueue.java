@@ -173,15 +173,16 @@ public class CustomQueue<T> implements QueueInterface<T> {
 
     System.out.println("\n==============================================================");
 
-    System.out.printf("%-12s %-15s %-12s %-12s%n",
+    System.out.printf("%-12s %-15s %-12s %-12s %-10s%n",
             "Waiting ID",
             "Name",
             "Member",
-            "Room Type"
+            "Room Type",
+            "Rooms Left"
     );
 
     System.out.println(
-            "---------------------------------------------------------------"
+            "--------------------------------------------------------------------------"
     );
 
     for (int i = 0; i < size; i++) {
@@ -189,11 +190,12 @@ public class CustomQueue<T> implements QueueInterface<T> {
         Booking booking =(Booking) queue[(front + i) % queue.length];
 
         System.out.printf(
-                "%-12s %-15s %-12s %-12s%n",
+                "%-12s %-15s %-12s %-12s %-10d%n",
                 booking.getWaitingNumber(),
                 booking.getGuestDisplayName(),
                 booking.getMembershipType(),
-                booking.getRoomType()
+                booking.getRoomType(),
+                booking.getRemainingRooms()
         );
     }
 

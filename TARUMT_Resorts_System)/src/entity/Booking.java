@@ -25,6 +25,8 @@ public class Booking {
 
     private String roomType;
     private int numberOfNights;
+    private int numberOfRooms = 1;
+    private int remainingRooms = 1;
     private double totalBilling;
 
     private String roomId;
@@ -144,6 +146,30 @@ public class Booking {
         return numberOfNights;
     }
 
+    public int getNumberOfRooms() {
+        return numberOfRooms;
+    }
+
+    public int getRemainingRooms() {
+        return remainingRooms;
+    }
+
+    public void setNumberOfRooms(int numberOfRooms) {
+        if (numberOfRooms <= 0) {
+            throw new IllegalArgumentException("Number of rooms must be greater than 0.");
+        }
+        this.numberOfRooms = numberOfRooms;
+        this.remainingRooms = numberOfRooms;
+        this.totalBilling = calculateTotalBilling(roomType, numberOfNights) * numberOfRooms;
+    }
+
+    public void assignRoom(String roomNumber) {
+        this.roomId = roomNumber;
+        this.roomAssignmentTime = LocalDateTime.now();
+        remainingRooms--;
+        bookingStatus = remainingRooms == 0 ? "ASSIGNED" : "PARTIALLY ASSIGNED";
+    }
+
     public double getTotalBilling() {
         return totalBilling;
     }
@@ -254,12 +280,13 @@ public class Booking {
     public String toString() {
 
         return String.format(
-                "%-8s %-15s %-10s %-10s %-5d %-15s",
+                "%-8s %-15s %-10s %-10s %-5d %-5d %-15s",
                 waitingNumber,
                 getGuestDisplayName(),
                 getMembershipType(),
                 roomType,
                 numberOfNights,
+                remainingRooms,
                 bookingStatus
         );
     }

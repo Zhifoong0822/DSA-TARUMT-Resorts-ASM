@@ -85,7 +85,13 @@ public class RegisterInterfaceController {
         return memberDAO.findMemberByIC(icNumber);
     }
 
-    public void registerBooking(String icNumber,String roomType,int numberOfNights,String guestName) {
+    public void registerBooking(String icNumber, String roomType, int numberOfNights, String guestName) {
+        registerBooking(icNumber, roomType, numberOfNights, guestName, 1);
+    }
+
+    /** Registers one waiting entry for a room type and its requested quantity. */
+    public void registerBooking(String icNumber, String roomType, int numberOfNights,
+            String guestName, int numberOfRooms) {
       
         Member member =memberDAO.findMemberByIC(icNumber);
 
@@ -105,6 +111,8 @@ public class RegisterInterfaceController {
 
         booking = new Booking(bookingId,confirmationNumber,waitingNumber,guestName,icNumber,roomType,numberOfNights);
     }
+
+    booking.setNumberOfRooms(numberOfRooms);
 
     if (member != null && isLoyaltyTier(member.getMembershipType()) && vipController != null) {
         LoyaltyRoomRequest request = saveLoyaltyBooking(booking);
@@ -131,11 +139,50 @@ public class RegisterInterfaceController {
         System.out.println("Guest            : "+ booking.getGuestDisplayName());
         System.out.println("Type             : "+ booking.getMembershipType() );
         System.out.println("Room Type        : "+ booking.getRoomType());
+        System.out.println("Number of Rooms  : " + booking.getNumberOfRooms());
         System.out.println("Number of Nights : "+ booking.getNumberOfNights());
         System.out.printf("Total Billing    : RM %.2f%n",booking.getTotalBilling());
         System.out.println("Registration Time: "+ booking.getFormattedRegistrationTime());
         System.out.println("Status           : "+ booking.getBookingStatus());
         System.out.println("\nPlease wait for your number to be called.");
+    }
+
+    /**
+     * Combines matching room types into one queue entry; different room types
+     * become independent entries so they can be allocated separately.
+     */
+    public void registerBooking(String icNumber, String[] roomTypes, int numberOfNights,
+            String guestName) {
+        if (roomTypes == null || roomTypes.length == 0) {
+            return;
+        }
+
+        String[] uniqueTypes = new String[roomTypes.length];
+        int[] quantities = new int[roomTypes.length];
+        int uniqueCount = 0;
+        for (String roomType : roomTypes) {
+            if (roomType == null || roomType.trim().isEmpty()) {
+                System.out.println("Room type cannot be empty. Registration cancelled.");
+                return;
+            }
+            int index = -1;
+            for (int i = 0; i < uniqueCount; i++) {
+                if (uniqueTypes[i].equalsIgnoreCase(roomType.trim())) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == -1) {
+                uniqueTypes[uniqueCount] = roomType.trim();
+                quantities[uniqueCount++] = 1;
+            } else {
+                quantities[index]++;
+            }
+        }
+
+        for (int i = 0; i < uniqueCount; i++) {
+            registerBooking(icNumber, uniqueTypes[i], numberOfNights, guestName, quantities[i]);
+        }
     }
 
 
@@ -217,11 +264,10 @@ public class RegisterInterfaceController {
         System.out.println("Selected room   : "+ room.getRoomType());
         return;
     }
-    booking = removeFirstBookingForRoomType(room.getRoomType());
-
-    booking.setRoomId(room.getRoomNumber());
-    booking.setRoomAssignmentTime(LocalDateTime.now());
-    booking.setBookingStatus("ASSIGNED");
+    if (booking.getRemainingRooms() == 1) {
+        removeBooking(booking);
+    }
+    booking.assignRoom(room.getRoomNumber());
     createCheckedInGuestProfile(booking);
     room.setStatus("Occupied");
     if (housekeepingController != null) {
@@ -235,6 +281,7 @@ public class RegisterInterfaceController {
     System.out.println("Type           : "+ booking.getMembershipType());
     System.out.println("Room Type      : "+ booking.getRoomType());
     System.out.println("Room Number    : "+ booking.getRoomId());
+    System.out.println("Rooms Remaining: " + booking.getRemainingRooms());
     System.out.println("Number of Nights : "+ booking.getNumberOfNights());
     System.out.println("Registration Time : "+ booking.getFormattedRegistrationTime());
     System.out.println("Room Assigned Time : "+ booking.getFormattedRoomAssignmentTime());
@@ -369,6 +416,15 @@ public class RegisterInterfaceController {
         for (int i = 0; i < bookingQueue.size(); i++) {
             Booking booking = bookingQueue.get(i);
             if (booking.getRoomType().equalsIgnoreCase(roomType)) {
+                return bookingQueue.remove(i);
+            }
+        }
+        return null;
+    }
+
+    private Booking removeBooking(Booking target) {
+        for (int i = 0; i < bookingQueue.size(); i++) {
+            if (bookingQueue.get(i) == target) {
                 return bookingQueue.remove(i);
             }
         }

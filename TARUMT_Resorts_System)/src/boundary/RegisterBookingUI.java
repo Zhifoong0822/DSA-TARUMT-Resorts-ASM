@@ -139,21 +139,28 @@ public class RegisterBookingUI {
             return;
         }
 
-        System.out.print("\nEnter Room Type ((Penthouse/Deluxe/Suite)or -1 to exit): ");
-
-        String roomType =scanner.nextLine();
-
-        if (roomType.equals("-1")) {
-            System.out.println("Registration cancelled.");
-            return;
-        }
-
         int numberOfNights = inputNumberOfNights();
         if (numberOfNights == -1) {
             return;
         }
 
-        controller.registerBooking(icNumber,roomType,numberOfNights,guestName);
+        int numberOfRooms = inputNumberOfRooms();
+        if (numberOfRooms == -1) {
+            return;
+        }
+
+        String[] roomTypes = new String[numberOfRooms];
+        for (int i = 0; i < numberOfRooms; i++) {
+            System.out.print("Enter Room Type for Room " + (i + 1)
+                    + " (Penthouse/Deluxe/Suite, or -1 to exit): ");
+            roomTypes[i] = scanner.nextLine();
+            if (roomTypes[i].equals("-1")) {
+                System.out.println("Registration cancelled.");
+                return;
+            }
+        }
+
+        controller.registerBooking(icNumber, roomTypes, numberOfNights, guestName);
     }
 
     private int inputNumberOfNights() {
@@ -179,6 +186,27 @@ public class RegisterBookingUI {
 
                 return numberOfNights;
 
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            }
+        }
+    }
+
+    private int inputNumberOfRooms() {
+        while (true) {
+            System.out.print("Enter Number of Rooms (Enter -1 to exit): ");
+            String input = scanner.nextLine();
+            if (input.equals("-1")) {
+                System.out.println("Registration cancelled.");
+                return -1;
+            }
+            try {
+                int numberOfRooms = Integer.parseInt(input);
+                if (numberOfRooms <= 0) {
+                    System.out.println("Number of rooms must be greater than 0.");
+                    continue;
+                }
+                return numberOfRooms;
             } catch (NumberFormatException e) {
                 System.out.println("Please enter a valid number.");
             }
