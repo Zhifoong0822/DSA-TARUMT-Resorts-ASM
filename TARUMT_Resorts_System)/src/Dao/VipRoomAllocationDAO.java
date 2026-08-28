@@ -18,6 +18,7 @@ public class VipRoomAllocationDAO {
         tree.add(createProjectStartRequest("RQ1003", "Chloe Tan", "Diamond", "Suite", 4, 3200.00, 3));
         tree.add(createProjectStartRequest("RQ1004", "Daniel Lee", "Elite", "Suite", 1, 800.00, 4));
 
+
         return tree;
     }
 

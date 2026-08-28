@@ -186,6 +186,10 @@ public class Booking {
         return registrationTime;
     }
 
+    public void setRegistrationTime(LocalDateTime registrationTime) {
+        this.registrationTime = registrationTime;
+    }
+
     public LocalDateTime getRoomAssignmentTime() {
         return roomAssignmentTime;
     }

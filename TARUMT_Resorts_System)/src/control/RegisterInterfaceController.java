@@ -2,6 +2,7 @@
 package control;
 
 import Dao.MemberDao;
+import Dao.WaitingQueueDAO;
 import entity.Member;
 import entity.Booking;
 import java.time.LocalDateTime;
@@ -53,6 +54,7 @@ public class RegisterInterfaceController {
         bookingConfirmationMap = new CustomHashMap<>();
         loyaltyBookingByRequestId = new CustomHashMap<>();
         checkedInGuestProfiles = new CustomHashMap<>();
+        loadProjectStartWaitingBookings();
     }
 
     public Room[] getAvailableRooms(String roomType) {
@@ -83,6 +85,20 @@ public class RegisterInterfaceController {
     public Member findMemberByIC(String icNumber) {
 
         return memberDAO.findMemberByIC(icNumber);
+    }
+
+    /** Loads the standard guest queue records used by the startup reports. */
+    private void loadProjectStartWaitingBookings() {
+        Booking[] projectStartBookings = new WaitingQueueDAO().loadWaitingBookings();
+
+        for (int i = 0; i < projectStartBookings.length; i++) {
+            Booking booking = projectStartBookings[i];
+            bookingQueue.enqueue(booking);
+            bookingHistory.add(booking);
+            bookingConfirmationMap.put(booking.getConfirmationNumber(), booking);
+        }
+
+        bookingCounter = projectStartBookings.length + 1;
     }
 
     public void registerBooking(String icNumber, String roomType, int numberOfNights, String guestName) {
@@ -488,17 +504,14 @@ public class RegisterInterfaceController {
             LocalDateTime registerTime =booking.getRegistrationTime();
             LocalDateTime roomTime =booking.getRoomAssignmentTime();
 
-            if (registerTime == null|| roomTime == null) {
+            if (registerTime == null) {
                 continue;
             }
 
-            long waitingSeconds =Duration.between(registerTime,roomTime).getSeconds();
+            LocalDateTime endTime = roomTime == null ? LocalDateTime.now() : roomTime;
+            long waitingSeconds =Duration.between(registerTime,endTime).getSeconds();
             String type = booking.getMembershipType();
             String waitTime =formatDuration(waitingSeconds);
-            System.out.printf("%-8s %-15s %-10s %-18s %-18s %-12s%n",
-                    booking.getWaitingNumber(), booking.getGuestDisplayName(), type,
-                    booking.getFormattedRegistrationTime(),booking.getFormattedRoomAssignmentTime(),waitTime);
-
             if (isLoyaltyTier(type)) {
                 vipTotalSeconds += waitingSeconds;
                 vipCount++;
@@ -547,6 +560,21 @@ public class RegisterInterfaceController {
                     request.getRequestId(), request.getGuestName(), request.getLoyaltyTier(),
                     request.getFormattedRegistrationTime(), request.getFormattedRoomAssignmentTime(),
                     formatDuration(waitingSeconds));
+        }
+
+        // Print regular guests after VIP requests so the priority order is visible.
+        for (int i = 0; i < bookings.size(); i++) {
+            Booking booking = bookings.get(i);
+            if (booking.getRegistrationTime() == null) {
+                continue;
+            }
+            LocalDateTime endTime = booking.getRoomAssignmentTime() == null
+                    ? LocalDateTime.now() : booking.getRoomAssignmentTime();
+            long waitingSeconds = Duration.between(booking.getRegistrationTime(), endTime).getSeconds();
+            System.out.printf("%-8s %-15s %-10s %-18s %-18s %-12s%n",
+                    booking.getWaitingNumber(), booking.getGuestDisplayName(),
+                    booking.getMembershipType(), booking.getFormattedRegistrationTime(),
+                    booking.getFormattedRoomAssignmentTime(), formatDuration(waitingSeconds));
         }
 
         System.out.println("----------------------------------------------------------------------");
@@ -636,10 +664,10 @@ public class RegisterInterfaceController {
             int registerOrder =getRegistrationOrder(registrationOrder,booking);
             int assignOrder = getCombinedAllocationOrder(
                     booking.getRoomAssignmentTime(), assignmentOrder, daoVipRequests);
-            String assignment =assignOrder == 0 ? "-": String.valueOf(assignOrder);
+            String allocation = assignOrder == 0 ? "Waiting" : String.valueOf(assignOrder);
             System.out.printf("%-10s %-8s %-15s %-12s %-16d %-16s%n",
                     booking.getBookingId(), booking.getWaitingNumber(), booking.getGuestDisplayName(),
-                    booking.getMembershipType(), registerOrder, assignment);
+                    booking.getMembershipType(), registerOrder, allocation);
         }
         
         System.out.println("----------------------------------------------------------------------");
