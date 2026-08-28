@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+//@author Daniel Kok Wei Zen
 package boundary;
 
 import control.HousekeepingController;
@@ -11,10 +8,9 @@ import entity.HousekeepingTask;
 import entity.StatusChange;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import utility.InputHelper;
-
-//@author Daniel Kok Wei Zen
 
 public class HousekeepingUI {
 
@@ -296,6 +292,8 @@ public class HousekeepingUI {
             return;
         }
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        
         System.out.println();
 
         System.out.println("Latest Status Update");
@@ -306,12 +304,11 @@ public class HousekeepingUI {
 
         System.out.println("New Status: " + change.getNewStatus());
 
-        System.out.println("Update Time: " + change.getUpdateTime());
+        System.out.println("Update Time: " + change.getUpdateTime().format(formatter));
     }
 
     // ROOM STATUS REPORT 
     private void generateRoomStatusReport() {
-
         System.out.println();
 
         System.out.println("ROOM STATUS REPORT FILTER");
@@ -374,19 +371,11 @@ public class HousekeepingUI {
 
     // STAFF PERFORMANCE REPORT
     private void generateStaffPerformanceReport() {
-
         System.out.println("\nSTAFF PERFORMANCE REPORT FILTER");
         System.out.println("0. All Room Types");
         System.out.println("1. Deluxe");
         System.out.println("2. Suite");
         System.out.println("3. Penthouse");
-        System.out.print("Enter Room Type: ");
-
-        if (!scanner.hasNextInt()) {
-            System.out.println("Invalid selection.");
-            scanner.nextLine();
-            return;
-        }
 
         int roomTypeChoice = InputHelper.readIntInRange(scanner, "Enter Room Type: ", 0, 3);
 

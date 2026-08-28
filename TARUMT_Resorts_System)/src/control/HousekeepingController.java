@@ -547,27 +547,18 @@ public class HousekeepingController {
 
             if (dateMatch && roomTypeMatch && completed) {
 
-                int staffIndex
-                        = findStaffIndex(
-                                staffIds,
-                                staffCount,
-                                task.getStaffId()
-                        );
+                int staffIndex = findStaffIndex(staffIds, staffCount, task.getStaffId());
 
                 if (staffIndex == -1) {
-
-                    staffIds[staffCount]
-                            = task.getStaffId();
+                    staffIds[staffCount] = task.getStaffId();
 
                     completedTasks[staffCount] = 1;
 
-                    totalMinutes[staffCount]
-                            = task.getCompletionMinutes();
+                    totalMinutes[staffCount] = task.getCompletionMinutes();
 
                     staffCount++;
 
                 } else {
-
                     completedTasks[staffIndex]++;
 
                     totalMinutes[staffIndex]
@@ -585,8 +576,7 @@ public class HousekeepingController {
                 staffCount
         );
 
-        StringBuilder report
-                = new StringBuilder();
+        StringBuilder report = new StringBuilder();
 
         report.append("\n");
 
@@ -684,14 +674,11 @@ public class HousekeepingController {
 
         for (int i = 1; i < staffCount; i++) {
 
-            String keyStaff
-                    = staffIds[i];
+            String keyStaff = staffIds[i];
 
-            int keyCompleted
-                    = completedTasks[i];
+            int keyCompleted = completedTasks[i];
 
-            int keyMinutes
-                    = totalMinutes[i];
+            int keyMinutes = totalMinutes[i];
 
             int j = i - 1;
 
@@ -711,14 +698,11 @@ public class HousekeepingController {
                 j--;
             }
 
-            staffIds[j + 1]
-                    = keyStaff;
+            staffIds[j + 1] = keyStaff;
 
-            completedTasks[j + 1]
-                    = keyCompleted;
+            completedTasks[j + 1] = keyCompleted;
 
-            totalMinutes[j + 1]
-                    = keyMinutes;
+            totalMinutes[j + 1] = keyMinutes;
         }
     }
 
