@@ -14,7 +14,7 @@ public class VipRoomAllocationDAO {
         PriorityBinarySearchTreeInterface<LoyaltyRoomRequest> tree = new PriorityBinarySearchTree<>();
 
         tree.add(createProjectStartRequest("RQ1001", "Alicia Wong", "Platinum", "Penthouse", 3, 3600.00, 1));
-        tree.add(createProjectStartRequest("RQ1002", "Bryan Lim", "Platinum", "Deluxe", 2, 600.00, 2));
+        tree.add(createProjectStartRequest("RQ1002", "Bryan Lim", "Diamond", "Deluxe", 2, 600.00, 2));
         tree.add(createProjectStartRequest("RQ1003", "Chloe Tan", "Diamond", "Suite", 4, 3200.00, 3));
         tree.add(createProjectStartRequest("RQ1004", "Daniel Lee", "Elite", "Suite", 1, 800.00, 4));
 
